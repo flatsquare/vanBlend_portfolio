@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проект — van_blend</title>
+<script src="transition.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d10;
+    --fg: #fff;
+    --muted: #a3a3ab;
+    --accent: #9d5cff;
+    --line: rgba(255,255,255,.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  html, body {
+    height: 100%;
+    color: var(--fg);
+    font-family: "Jost", "Futura", "Century Gothic", sans-serif;
+    font-weight: 200;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  a, button {
+    color: inherit; text-decoration: none; font: inherit;
+    letter-spacing: inherit; text-transform: inherit;
+    background: none; border: 0; padding: 0; cursor: pointer;
+  }
+
+  /* ===================== ФОН (как на главной) ===================== */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
+  .blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+    animation: drift var(--t, 26s) ease-in-out infinite alternate;
+  }
+  .b-orange { width: 55vmax; height: 55vmax; left: -18vmax; bottom: -22vmax; background: #7a7a84; opacity: .32; --t: 28s; }
+  .b-purple { width: 42vmax; height: 42vmax; right: -12vmax; top: -16vmax; background: #9a9aa3; opacity: .28; --t: 24s; animation-delay: -6s; }
+  .b-white  { width: 30vmax; height: 30vmax; left: 38%; top: -14vmax; background: #ffffff; opacity: .12; --t: 32s; animation-delay: -12s; }
+  .b-gray   { width: 48vmax; height: 48vmax; right: -16vmax; bottom: -24vmax; background: #6c6c78; opacity: .35; --t: 30s; animation-delay: -3s; }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(6vmax, -4vmax) scale(1.1); }
+    100% { transform: translate(-4vmax, 5vmax) scale(.95); }
+  }
+  .bg::after {
+    content: ""; position: absolute; inset: 0; opacity: .09; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ===================== РАСКЛАДКА ===================== */
+  .page {
+    height: 100vh; height: 100dvh;
+    display: grid; grid-template-columns: 1fr clamp(260px, 24vw, 360px);
+    gap: clamp(24px, 3vw, 56px);
+    padding: clamp(96px, 13vh, 120px) clamp(16px, 3vw, 48px) clamp(24px, 5vh, 48px);
+    opacity: 0; transition: opacity .8s ease;
+  }
+  body.ready .page { opacity: 1; }
+
+  /* ===================== СЦЕНА (большой кадр) ===================== */
+  .stage-wrap { min-width: 0; min-height: 0; display: grid; place-items: center; }
+  .stage {
+    position: relative;
+    width: 100%; max-height: 100%; aspect-ratio: 16 / 9;
+    overflow: hidden; border-radius: 2px;
+    background: #1a1a1f;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.6), 0 20px 60px rgba(0,0,0,.5);
+    cursor: zoom-in;
+    touch-action: pan-y;
+  }
+  /* три слоя одного кадра: рендер / меш / сетка — переключаются плавным растворением */
+  .layer {
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity .45s ease;
+  }
+  .layer.on { opacity: 1; }
+  .layer img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+
+  /* заглушки, пока нет картинок */
+  .ph {
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    font-size: 12px; letter-spacing: .3em; text-transform: uppercase;
+  }
+  .ph-render { background: radial-gradient(ellipse at 40% 35%, #f6f4f1, #d9d6d2 70%); color: rgba(0,0,0,.45); }
+  .ph-clay   { background: radial-gradient(ellipse at 40% 35%, #a5a5ab, #6b6b72 75%); color: rgba(0,0,0,.5); }
+  .ph-wire   {
+    background:
+      repeating-linear-gradient(0deg,  rgba(255,255,255,.12) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 1px, transparent 1px 31px),
+      #16161b;
+    color: rgba(255,255,255,.55);
+  }
+
+  /* стрелки по краям сцены */
+  .arrow {
+    position: absolute; top: 0; bottom: 0; width: 18%;
+    display: grid; align-items: center;
+    padding: 0 clamp(10px, 2vw, 24px);
+    font-size: 28px; color: #fff;
+    opacity: 0; transition: opacity .3s ease;
+    text-shadow: 0 2px 12px rgba(0,0,0,.6);
+    cursor: pointer; z-index: 2;
+  }
+  .arrow.prev { left: 0; justify-items: start; }
+  .arrow.next { right: 0; justify-items: end; }
+  @media (hover: hover) { .stage:hover .arrow { opacity: .55; } .stage .arrow:hover { opacity: 1; } }
+  .arrow:focus-visible { opacity: 1; outline: none; }
+
+  /* счётчик ракурса в углу сцены */
+  .count {
+    position: absolute; right: 14px; bottom: 12px; z-index: 2;
+    font-size: 12px; letter-spacing: .3em;
+    color: #fff; mix-blend-mode: difference;
+    pointer-events: none;
+  }
+
+  /* полноэкранный просмотр по клику на сцену */
+  body.zoom .stage {
+    position: fixed; inset: 0; z-index: 60;
+    width: auto; max-height: none; aspect-ratio: auto;
+    box-shadow: none; border-radius: 0;
+    background: #000;
+    cursor: zoom-out;
+  }
+  body.zoom .layer img { object-fit: contain; }
+  body.zoom .count { right: 24px; bottom: 20px; }
+
+  /* ===================== ПАНЕЛЬ СПРАВА ===================== */
+  .side {
+    position: relative; min-height: 0;
+    display: flex; flex-direction: column; gap: clamp(22px, 4vh, 40px);
+    padding-left: clamp(20px, 2.4vw, 40px);
+  }
+  .side::before {                      /* пунктир-разделитель, как на странице проектов */
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    border-left: 1px dashed var(--line);
+  }
+  .title {
+    font-size: clamp(22px, 2.2vw, 34px);
+    font-weight: 200; line-height: 1.2;
+    letter-spacing: .12em; text-transform: uppercase;
+  }
+  .logo {
+    align-self: flex-start;
+    min-width: 120px; height: 48px;
+    display: inline-grid; place-items: center;
+    padding: 0 18px;
+    border: 1px solid rgba(255,255,255,.6);
+    font-size: 13px; letter-spacing: .2em; text-transform: uppercase;
+  }
+  .logo.has-img { border: 0; padding: 0; }
+  .logo img { max-height: 48px; max-width: 180px; display: block; }
+
+  /* информация о проекте — между логотипом и просмотрщиком */
+  .about { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 18px; }
+  .about p {
+    font-size: 14px; font-weight: 300; line-height: 1.7; letter-spacing: .04em;
+    color: #c4c4cc; max-width: 42ch;
+  }
+  .about dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+  .about dt { color: var(--muted); opacity: .6; }
+  .about dd { color: #c4c4cc; }
+  .about.is-ph p, .about.is-ph dd { color: var(--muted); opacity: .55; }   /* заглушка, пока нет текста */
+
+  /* просмотрщик: переключатель вида над миниатюрами, прижат к низу панели */
+  .viewer-ctl { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+
+  /* переключатель вида: рендер / меш / wireframe — три равных сегмента в рамке */
+  .switch { display: flex; flex-direction: column; gap: 4px; }
+  .modes {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid rgba(255,255,255,.22); border-radius: 2px;
+  }
+  .mode {
+    position: relative;
+    min-height: 40px; padding: 6px 4px;
+    display: grid; place-items: center;
+    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted);
+    transition: color .3s ease, background-color .3s ease;
+  }
+  .mode + .mode { border-left: 1px solid rgba(255,255,255,.22); }
+  .mode:hover, .mode:focus-visible { color: #fff; background: rgba(255,255,255,.04); outline: none; }
+  .mode[aria-pressed="true"] { color: #fff; background: rgba(255,255,255,.08); }
+
+  /* ползунок под сегментами: фиолетовая ручка ездит к выбранному виду.
+     Можно кликнуть по дорожке или потащить ручку — она встаёт на ближайший вид */
+  .track {
+    --i: 0;                              /* номер выбранного вида, ставится из скрипта */
+    position: relative; height: 26px;
+    cursor: pointer; touch-action: none; outline: none;
+  }
+  .track::before {                       /* сама дорожка */
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 10px; translate: 0 -50%;
+    border: 1px solid rgba(255,255,255,.28); border-radius: 999px;
+    background: rgba(255,255,255,.04);
+  }
+  .knob {
+    position: absolute; top: 50%;
+    left: calc((var(--i) + .5) / 3 * 100%);
+    width: 22px; height: 22px; translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #c39bff, var(--accent) 55%, #6a2fd6);
+    box-shadow: 0 0 14px rgba(157, 92, 255, .7), 0 2px 6px rgba(0,0,0,.5);
+    transition: left .45s cubic-bezier(.34, 1.4, .64, 1), scale .25s ease;
+  }
+  .track:hover .knob, .track:focus-visible .knob { scale: 1.15; }
+  .track.drag .knob { scale: 1.2; transition: scale .25s ease; }
+
+  /* миниатюры ракурсов */
+  .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }  .thumb {
+    position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.18);
+    filter: brightness(.6);
+    transition: filter .3s ease, box-shadow .3s ease;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .ph { font-size: 9px; letter-spacing: .2em; }
+  .thumb:hover, .thumb:focus-visible { filter: brightness(.9); outline: none; box-shadow: 0 0 0 1px rgba(255,255,255,.45); }
+  .thumb[aria-current="true"] { filter: none; box-shadow: 0 0 0 1px rgba(255,255,255,.85); }
+
+  .hint {
+    font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--muted); opacity: .55;
+  }
+
+  /* ===================== «НАЗАД» ===================== */
+  /* меню на странице проекта нет — вместо него крупная двойная стрелка слева сверху */
+  .prev-tab {
+    position: fixed; z-index: 50;
+    top: clamp(10px, 2vh, 20px); left: clamp(8px, 3vw - 12px, 36px);
+    width: 80px; height: 80px;
+    display: grid; place-items: center;
+    color: var(--muted);
+    transition: color .3s ease;
+  }
+  .prev-tab svg { width: 46px; height: 46px; transition: transform .4s cubic-bezier(.34, 1.56, .64, 1); }
+  .prev-tab:hover, .prev-tab:focus-visible { color: var(--accent); outline: none; }
+  .prev-tab:hover svg, .prev-tab:focus-visible svg { transform: translateX(-6px); }
+  /* ===================== ТЕЛЕФОН ===================== */
+  @media (max-width: 760px) {
+    .prev-tab { top: 6px; left: 4px; width: 60px; height: 60px; }
+    html, body { overflow: auto; }
+    .page { height: auto; min-height: 100dvh; grid-template-columns: 1fr; padding: 76px 16px 40px; gap: 28px; }
+    .side { padding-left: 0; padding-top: 24px; }
+    .side::before { left: 10%; right: 10%; bottom: auto; border-left: 0; border-top: 1px dashed var(--line); }
+    .mode { font-size: 11px; letter-spacing: .12em; }
+    .thumbs { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .about { overflow: visible; }
+    .arrow { opacity: .5; width: 22%; }
+    .hint { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0s !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="blob b-orange"></div>
+  <div class="blob b-purple"></div>
+  <div class="blob b-white"></div>
+  <div class="blob b-gray"></div>
+</div>
+
+<a class="prev-tab" href="commercial.html" aria-label="Назад к коммерческим проектам" title="Назад к проектам">
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">
+    <path d="M23 9 8 24l15 15"/>
+    <path d="M38 9 23 24l15 15"/>
+  </svg>
+</a>
+
+<main class="page">
+  <section class="stage-wrap">
+    <div class="stage" id="stage" aria-live="polite">
+      <button class="arrow prev" id="prev" type="button" aria-label="Предыдущий ракурс">←</button>
+      <button class="arrow next" id="next" type="button" aria-label="Следующий ракурс">→</button>
+      <div class="count" id="count"></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <h1 class="title" id="title"></h1>
+    <div class="logo" id="logo"></div>
+
+    <div class="about" id="about"></div>
+
+    <div class="viewer-ctl">
+      <div class="switch">
+        <div class="modes" role="group" aria-label="Вид">
+          <button class="mode" type="button" data-mode="render">рендер</button>
+          <button class="mode" type="button" data-mode="clay">меш</button>
+          <button class="mode" type="button" data-mode="wire">wireframe</button>
+        </div>
+        <div class="track" id="track" role="slider" tabindex="0" aria-label="Вид" aria-valuemin="1" aria-valuemax="3">
+          <span class="knob"></span>
+        </div>
+      </div>
+      <div class="thumbs" id="thumbs" aria-label="Ракурсы"></div>
+    </div>
+
+    <div class="hint" aria-hidden="true">← → ракурс · 1 2 3 вид</div>
+  </aside>
+</main>
+
+<script src="projects.js"></script>
+<script>
+(() => {
+  const MODES = ['render', 'clay', 'wire'];
+  const MODE_NAME = { render: 'рендер', clay: 'меш', wire: 'wireframe' };
+
+  // какой проект открыт: project.html?p=0
+  const idx = Math.max(0, Math.min(PROJECTS.length - 1, parseInt(new URLSearchParams(location.search).get('p'), 10) || 0));
+  const p = PROJECTS[idx];
+  const shots = p.shots && p.shots.length ? p.shots : [{ render: '', clay: '', wire: '' }];
+
+  const stage = document.getElementById('stage');
+  const countEl = document.getElementById('count');
+  const thumbsEl = document.getElementById('thumbs');
+  const modeBtns = [...document.querySelectorAll('.mode')];
+
+  // ----- шапка -----
+  document.title = `${p.title} — van_blend`;
+  document.getElementById('title').textContent = p.title;
+  const logoEl = document.getElementById('logo');
+  if (p.logo) {
+    logoEl.className = 'logo has-img';
+    logoEl.innerHTML = `<img src="${p.logo}" alt="${p.client}">`;
+  } else {
+    logoEl.textContent = p.client || 'logo';
+  }
+
+  // ----- информация о проекте (about и meta в projects.js; пусто — заглушка) -----
+  const aboutEl = document.getElementById('about');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const about = p.about || 'Описание проекта: задача от клиента, идея и что было сделано. Два-три коротких предложения.';
+  const meta = p.meta && p.meta.length ? p.meta : [['год', '2026'], ['задача', 'моделинг · рендер'], ['софт', 'blender']];
+  aboutEl.classList.toggle('is-ph', !p.about);
+  aboutEl.innerHTML = `<p>${esc(about)}</p><dl>${meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+
+  const fill = (src, mode, label) => src
+    ? `<img src="${src}" alt="" draggable="false">`
+    : `<div class="ph ph-${mode}">${label}</div>`;
+
+  // ----- слои сцены: для каждого ракурса по три картинки -----
+  const layers = shots.map((s, i) => MODES.map(m => {
+    const el = document.createElement('div');
+    el.className = 'layer';
+    el.innerHTML = fill(s[m], m, `${MODE_NAME[m]} · ракурс ${i + 1}`);
+    stage.insertBefore(el, countEl);
+    return el;
+  }));
+
+  // ----- миниатюры -----
+  const thumbs = shots.map((s, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'thumb';
+    b.setAttribute('aria-label', `Ракурс ${i + 1}`);
+    b.addEventListener('click', () => setShot(i));
+    thumbsEl.appendChild(b);
+    return b;
+  });
+
+  // ----- состояние -----
+  let shot = 0, mode = 'render';
+
+  function render() {
+    layers.forEach((row, i) => row.forEach((el, m) =>
+      el.classList.toggle('on', i === shot && MODES[m] === mode)));
+    // миниатюры показывают текущий вид (рендер / меш / сетку)
+    thumbs.forEach((b, i) => {
+      b.innerHTML = fill(shots[i][mode], mode, String(i + 1).padStart(2, '0'));
+      b.setAttribute('aria-current', i === shot);
+    });
+    modeBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode));
+    const mi = MODES.indexOf(mode);
+    track.style.setProperty('--i', mi);
+    track.setAttribute('aria-valuenow', mi + 1);
+    track.setAttribute('aria-valuetext', MODE_NAME[mode]);
+    countEl.textContent = `${String(shot + 1).padStart(2, '0')} / ${String(shots.length).padStart(2, '0')}`;
+  }
+  const setShot = i => { shot = (i + shots.length) % shots.length; render(); };
+  const setMode = m => { mode = m; render(); };
+
+  // ----- управление -----
+  modeBtns.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+  // ползунок: клик по дорожке или перетаскивание ручки — вид под пальцем
+  const track = document.getElementById('track');
+  const modeAt = x => {
+    const r = track.getBoundingClientRect();
+    return MODES[Math.max(0, Math.min(2, Math.floor((x - r.left) / r.width * 3)))];
+  };
+  track.addEventListener('pointerdown', e => {
+    track.setPointerCapture(e.pointerId);
+    track.classList.add('drag');
+    setMode(modeAt(e.clientX));
+  });
+  track.addEventListener('pointermove', e => {
+    if (!track.classList.contains('drag')) return;
+    const m = modeAt(e.clientX);
+    if (m !== mode) setMode(m);
+  });
+  const stopDrag = () => track.classList.remove('drag');
+  track.addEventListener('pointerup', stopDrag);
+  track.addEventListener('pointercancel', stopDrag);
+  document.getElementById('prev').addEventListener('click', e => { e.stopPropagation(); setShot(shot - 1); });
+  document.getElementById('next').addEventListener('click', e => { e.stopPropagation(); setShot(shot + 1); });
+
+  // клик по кадру — во весь экран и обратно
+  stage.addEventListener('click', () => { if (!swiped) document.body.classList.toggle('zoom'); });
+
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') setShot(shot + 1);
+    else if (e.key === 'ArrowLeft') setShot(shot - 1);
+    else if (e.key === 'ArrowDown') setMode(MODES[(MODES.indexOf(mode) + 1) % 3]);
+    else if (e.key === 'ArrowUp') setMode(MODES[(MODES.indexOf(mode) + 2) % 3]);
+    else if (e.key >= '1' && e.key <= '3') setMode(MODES[+e.key - 1]);
+    else if (e.key === 'Escape') {
+      if (document.body.classList.contains('zoom')) document.body.classList.remove('zoom');
+      else (window.vbGo || (u => location.href = u))('commercial.html');
+      return;
+    } else return;
+    e.preventDefault();
+  });
+
+  // свайп по кадру на телефоне
+  let sx = null, swiped = false;
+  stage.addEventListener('pointerdown', e => { sx = e.clientX; swiped = false; });
+  addEventListener('pointerup', e => {
+    if (sx === null) return;
+    const dx = e.clientX - sx;
+    sx = null;
+    if (Math.abs(dx) > 40) { swiped = true; setShot(shot + (dx < 0 ? 1 : -1)); setTimeout(() => swiped = false, 0); }
+  });
+
+  // ----- старт -----
+  render();
+  requestAnimationFrame(() => document.body.classList.add('ready'));
+})();
+</script>
+<script>
+/* =====================================================================
+   ПОЯВЛЕНИЕ КАРТОЧКИ ПРОЕКТА — в три шага:
+   1) в центре экрана проявляется кадр (сцена);
+   2) справа выезжает панель с названием и сдвигает кадр влево;
+   3) сверху опускается стрелка «назад», а всё съезжает вниз, на место.
+   Анимируются только opacity, translate и scale (Web Animations API) — без нагрузки.
+   На телефоне и при «уменьшить движение» — без этого вступления.
+   ===================================================================== */
+(() => {
+  if (matchMedia('(max-width: 760px), (prefers-reduced-motion: reduce)').matches) return;
+
+  const wrap = document.querySelector('.stage-wrap');
+  const stage = document.getElementById('stage');
+  const side = document.querySelector('.side');
+  const back = document.querySelector('.prev-tab');
+  if (!wrap || !side || !back) return;
+
+  // смещения считаются по раскладке (offset*), трансформации переходов на них не влияют
+  const dx0 = innerWidth / 2 - (stage.offsetLeft + stage.offsetWidth / 2);   // кадр по центру экрана
+  const dy0 = innerHeight / 2 - (stage.offsetTop + stage.offsetHeight / 2);
+  const dxSide = innerWidth - side.offsetLeft;                                // панель за правым краем
+  const dyBack = -(back.offsetTop + back.offsetHeight);                       // стрелка над верхним краем
+
+  // шаги по времени: 1 — 0…420 мс, 2 — 420…980, 3 — 980…1450
+  const T = 1450, A = 420 / T, B = 980 / T;
+  const EASE = 'cubic-bezier(.65, 0, .35, 1)';
+  const opt = { duration: T, easing: 'linear' };
+  const t = (x, y) => `${x}px ${y}px`;
+
+  // кадр: проявляется по центру (opacity не 0 — иначе Chrome придерживает первый кадр)
+  wrap.animate([
+    { offset: 0, translate: t(dx0, dy0), scale: .96, opacity: .01, easing: 'ease-out' },
+    { offset: A, translate: t(dx0, dy0), scale: 1,   opacity: 1,   easing: EASE },
+    { offset: B, translate: t(0, dy0),   scale: 1,   opacity: 1,   easing: EASE },
+    { offset: 1, translate: t(0, 0),     scale: 1,   opacity: 1 },
+  ], opt);
+  // панель справа: выезжает на шаге 2
+  side.animate([
+    { offset: 0, translate: t(dxSide, dy0), opacity: 0 },
+    { offset: A, translate: t(dxSide, dy0), opacity: 0, easing: EASE },
+    { offset: B, translate: t(0, dy0),      opacity: 1, easing: EASE },
+    { offset: 1, translate: t(0, 0),        opacity: 1 },
+  ], opt);
+  // стрелка «назад»: опускается сверху на шаге 3
+  back.animate([
+    { offset: 0, translate: t(0, dyBack), opacity: 0 },
+    { offset: B, translate: t(0, dyBack), opacity: 0, easing: EASE },
+    { offset: 1, translate: t(0, 0),      opacity: 1 },
+  ], opt);
+})();
+</script>
+</body>
+</html>

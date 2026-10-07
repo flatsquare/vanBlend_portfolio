@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Коммерческие проекты — van_blend</title>
+<script src="transition.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d10;
+    --fg: #fff;
+    --muted: #a3a3ab;
+    --accent: #9d5cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  html, body {
+    height: 100%;
+    color: var(--fg);
+    font-family: "Jost", "Futura", "Century Gothic", sans-serif;
+    font-weight: 200;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  a, button {
+    color: inherit; text-decoration: none; font: inherit;
+    letter-spacing: inherit; text-transform: inherit;
+    background: none; border: 0; padding: 0; cursor: pointer;
+  }
+
+  /* ===================== ФОН (как на главной) ===================== */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
+  .blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+    animation: drift var(--t, 26s) ease-in-out infinite alternate;
+  }
+  .b-orange { width: 55vmax; height: 55vmax; left: -18vmax; bottom: -22vmax; background: #7a7a84; opacity: .32; --t: 28s; }
+  .b-purple { width: 42vmax; height: 42vmax; right: -12vmax; top: -16vmax; background: #9a9aa3; opacity: .28; --t: 24s; animation-delay: -6s; }
+  .b-white  { width: 30vmax; height: 30vmax; left: 38%; top: -14vmax; background: #ffffff; opacity: .12; --t: 32s; animation-delay: -12s; }
+  .b-gray   { width: 48vmax; height: 48vmax; right: -16vmax; bottom: -24vmax; background: #6c6c78; opacity: .35; --t: 30s; animation-delay: -3s; }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(6vmax, -4vmax) scale(1.1); }
+    100% { transform: translate(-4vmax, 5vmax) scale(.95); }
+  }
+  .bg::after {
+    content: ""; position: absolute; inset: 0; opacity: .09; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ===================== РАСКЛАДКА ===================== */
+  .page {
+    height: 100vh; height: 100dvh;
+    display: grid; grid-template-columns: 1.3fr 1fr;
+    opacity: 0; transition: opacity .8s ease;
+  }
+  body.ready .page { opacity: 1; }
+
+  /* ===================== КАРУСЕЛЬ (как XMB у PSP) ===================== */
+  .carousel {
+    position: relative; overflow: hidden;
+    touch-action: none; user-select: none;
+    outline: none;
+    /* мягкое затухание сверху и снизу */
+    -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+            mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  }
+  .card {
+    position: absolute; left: 50%; top: 50%;
+    border-radius: 2px;
+    overflow: hidden;
+    background: #2a2a30 center / cover no-repeat;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.18);
+    will-change: transform, width, height, opacity;
+    cursor: pointer;
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .card .ph {                         /* заглушка, пока нет обложки */
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    font-size: 12px; letter-spacing: .3em; text-transform: uppercase;
+    color: rgba(0,0,0,.45);
+  }
+  /* hover на неактивных карточках: чуть увеличиваются и светлеют */
+  @property --hs { syntax: '<number>'; inherits: false; initial-value: 1; }
+  @property --hb { syntax: '<number>'; inherits: false; initial-value: 1; }
+  .card { transition: --hs .35s cubic-bezier(.34, 1.56, .64, 1), --hb .3s ease, box-shadow .3s ease; }
+  @media (hover: hover) {
+    .card:not(.active):hover {
+      --hs: 1.07; --hb: 1.25;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.45), 0 12px 40px rgba(0,0,0,.4);
+    }
+    /* активная (белая) тоже чуть увеличивается — по ней открывается проект */
+    .card.active:hover { --hs: 1.04; box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 26px 70px rgba(0,0,0,.55); }
+  }
+  .card.active { cursor: pointer; box-shadow: 0 0 0 1px rgba(255,255,255,.6), 0 20px 60px rgba(0,0,0,.5); }
+
+  /* ===================== ИНФО О ПРОЕКТЕ ===================== */
+  .info {
+    position: relative;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: clamp(36px, 6vh, 64px);
+    padding: 0 clamp(16px, 5vw, 80px);
+    text-align: center;
+  }
+  .info::before {                     /* пунктирная линия-разделитель как на схеме */
+    content: ""; position: absolute; left: 0; top: 0; bottom: 8%;
+    border-left: 1px dashed rgba(255,255,255,.18);
+  }
+  .label {
+    display: block; margin-bottom: 14px;
+    font-size: 11px; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--muted); opacity: .7;
+  }
+  .title {
+    font-size: clamp(26px, 3.4vw, 48px);
+    font-weight: 200; line-height: 1.2;
+    letter-spacing: .12em; text-transform: uppercase;
+    max-width: 14ch;
+    margin: 0 auto;
+  }
+  .logo {
+    min-width: 120px; height: 56px;
+    display: inline-grid; place-items: center;
+    padding: 0 20px;
+    border: 1px solid rgba(255,255,255,.6);
+    font-size: 15px; letter-spacing: .2em; text-transform: uppercase;
+  }
+  .logo.has-img { border: 0; padding: 0; }
+  .logo img { max-height: 56px; max-width: 200px; display: block; }
+
+  /* смена проекта: старое уезжает вверх, новое приходит снизу */
+  .swap { transition: opacity .35s ease, transform .35s ease, filter .35s ease; }
+  .swap.out { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
+  .swap.in  { opacity: 0; transform: translateY(14px);  filter: blur(4px); transition: none; }
+
+  /* ===================== ПОДСКАЗКА ===================== */
+  .hint {
+    position: fixed; bottom: clamp(14px, 3vh, 28px); right: clamp(16px, 3vw, 40px);
+    font-size: 11px; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--muted); opacity: .55;
+    pointer-events: none;
+  }
+
+  /* переход в проект (см. transition.js): зум идёт в активную карточку — центр левой колонки */
+  @media (min-width: 761px) {
+    body.vb-out-zin .page { transform-origin: calc(1.3 / 2.3 * 50%) calc(50% + var(--vb-nav-h, 110px) / 2 + 20px); }
+  }
+
+  /* ===================== ТЕЛЕФОН ===================== */
+  @media (max-width: 760px) {
+    .page { grid-template-columns: 1fr; grid-template-rows: 58% 42%; padding-top: 134px; }
+    .info { justify-content: flex-start; padding-top: 12px; gap: 28px; }
+    .info::before { left: 10%; right: 10%; top: 0; bottom: auto; border-left: 0; border-top: 1px dashed rgba(255,255,255,.18); }
+    .hint { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0s !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="blob b-orange"></div>
+  <div class="blob b-purple"></div>
+  <div class="blob b-white"></div>
+  <div class="blob b-gray"></div>
+</div>
+
+
+<main class="page">
+  <section class="carousel" id="carousel" tabindex="0" aria-label="Коммерческие проекты, листай колесом или стрелками"></section>
+
+  <section class="info" aria-live="polite">
+    <div class="swap" id="titleBox">
+      <h1 class="title" id="title"></h1>
+    </div>
+    <div class="swap" id="clientBox">
+      <div class="logo" id="logo"></div>
+    </div>
+  </section>
+</main>
+
+<div class="hint" aria-hidden="true">↑ ↓ листать</div>
+
+<script src="projects.js"></script>
+<script>
+(() => {
+  const root = document.getElementById('carousel');
+  const titleEl = document.getElementById('title');
+  const logoEl = document.getElementById('logo');
+  const titleBox = document.getElementById('titleBox');
+  const clientBox = document.getElementById('clientBox');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // заглушки-обложки: разные оттенки серого, пока нет картинок
+  const PH = ['#f2f2f4', '#ececf0', '#f4f2f0', '#eeeef2', '#f0eef4', '#f2f2ef', '#ededf1'];
+
+  const cards = PROJECTS.map((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', p.title);
+    if (p.cover) {
+      el.innerHTML = `<img src="${p.cover}" alt="" draggable="false">`;
+    } else {
+      el.style.background = PH[i % PH.length];
+      el.innerHTML = `<div class="ph">обложка ${i + 1}</div>`;
+    }
+    el.addEventListener('click', () => {
+      if (dragMoved) return;
+      if (i === mod(current, N)) openProject(i);   // активная карточка → страница проекта
+      else goTo(i);
+    });
+    root.appendChild(el);
+    return el;
+  });
+
+  // ----- геометрия -----
+  let W, H, GAP;
+  function measure() {
+    const r = root.getBoundingClientRect();
+    W = Math.min(r.width * (r.width < 700 ? 0.92 : 0.86), 680);   // ширина центральной карточки
+    H = Math.min(W * 0.5625, r.height * 0.46);   // высота (16:9), но не выше половины экрана
+    W = Math.min(W, H / 0.5625);
+    GAP = Math.max(14, H * 0.18);
+  }
+  // размеры: центр → соседи → дальние (как на схеме)
+  const sizeAt = a => {
+    const k1 = Math.min(a, 1), k2 = Math.min(Math.max(a - 1, 0), 1);
+    return {
+      w: W * (1 - 0.27 * k1 - 0.12 * k2),
+      h: H * (1 - 0.40 * k1 - 0.18 * k2)
+    };
+  };
+  // вертикальная позиция центра карточки на расстоянии a от активной
+  function posAt(a) {
+    let y = 0, prev = sizeAt(0).h, k = 0;
+    while (k + 1 <= a) {
+      const next = sizeAt(k + 1).h;
+      y += prev / 2 + GAP + next / 2;
+      prev = next; k++;
+    }
+    const f = a - k;
+    if (f > 0) {
+      const next = sizeAt(k + 1).h;
+      y += (prev / 2 + GAP + next / 2) * f;
+    }
+    return y;
+  }
+
+  // ----- состояние -----
+  // карусель бесконечная: current и shown растут без ограничений,
+  // а номер проекта — это остаток от деления на их количество
+  const N = PROJECTS.length;
+  const mod = (a, m) => ((a % m) + m) % m;
+  const wrap = d => d - N * Math.round(d / N);   // кратчайшее расстояние по кругу
+  let current = 0;          // активный проект (без ограничений)
+  let shown = 0;            // плавно догоняет current
+  let raf = null;
+
+  function render() {
+    cards.forEach((el, i) => {
+      const d = wrap(i - shown), a = Math.abs(d);
+      const { w, h } = sizeAt(a);
+      const y = Math.sign(d) * posAt(a);
+      const op = a < 2 ? 1 - a * 0.2 : Math.max(0, 0.6 - (a - 2) * 0.6);
+      const br = 1 - Math.min(a, 2.5) * 0.3;
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      el.style.transform = `translate(-50%, -50%) translateY(${y}px) scale(var(--hs))`;
+      el.style.opacity = op;
+      el.style.filter = `brightness(calc(${br.toFixed(3)} * var(--hb)))`;
+      el.style.zIndex = 100 - Math.round(a * 10);
+      el.style.visibility = op <= 0 ? 'hidden' : 'visible';
+      el.classList.toggle('active', i === mod(current, N));
+      el.tabIndex = -1;
+    });
+  }
+
+  function tick() {
+    const diff = current - shown;
+    shown += diff * (reduceMotion ? 1 : 0.14);
+    if (Math.abs(diff) < 0.001) shown = current;
+    render();
+    raf = shown === current ? null : requestAnimationFrame(tick);
+  }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+  // ----- правая панель -----
+  let infoTimer;
+  function setInfo(i, animate = true) {
+    const p = PROJECTS[i];
+    const apply = () => {
+      titleEl.textContent = p.title;
+      if (p.logo) {
+        logoEl.className = 'logo has-img';
+        logoEl.innerHTML = `<img src="${p.logo}" alt="${p.client}">`;
+      } else {
+        logoEl.className = 'logo';
+        logoEl.textContent = p.client || 'logo';
+      }
+    };
+    clearTimeout(infoTimer);
+    if (!animate || reduceMotion) { apply(); return; }
+    [titleBox, clientBox].forEach(b => b.classList.add('out'));
+    infoTimer = setTimeout(() => {
+      apply();
+      [titleBox, clientBox].forEach(b => { b.classList.remove('out'); b.classList.add('in'); });
+      requestAnimationFrame(() => requestAnimationFrame(() =>
+        [titleBox, clientBox].forEach(b => b.classList.remove('in'))
+      ));
+    }, 220);
+  }
+
+  function go(i) {
+    if (i === current) return;
+    current = i;
+    setInfo(mod(i, N));
+    kick();
+  }
+  // перейти к проекту с номером k кратчайшим путём по кругу
+  const goTo = k => go(current + wrap(k - mod(current, N)));
+  const openProject = i => (window.vbGo || (u => location.href = u))(`project.html?p=${i}`);
+
+  // ----- управление -----
+  // колесо мыши / тачпад
+  let wheelAcc = 0, wheelLock = 0;
+  addEventListener('wheel', e => {
+    e.preventDefault();
+    const now = performance.now();
+    wheelAcc += e.deltaY;
+    if (now < wheelLock) return;
+    if (Math.abs(wheelAcc) > 40) {
+      go(current + Math.sign(wheelAcc));
+      wheelAcc = 0;
+      wheelLock = now + 260;
+    }
+  }, { passive: false });
+
+  // клавиатура
+  addEventListener('keydown', e => {
+    if (['ArrowDown', 'ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); go(current + 1); }
+    if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key))      { e.preventDefault(); go(current - 1); }
+    if (e.key === 'Enter') openProject(mod(current, N));
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End') goTo(N - 1);
+    if (e.key === 'Escape') (window.vbGo || (u => location.href = u))('index.html#menu');
+  });
+
+  // перетаскивание пальцем / мышью
+  let dragY = null, dragStart = 0, dragMoved = false;
+  root.addEventListener('pointerdown', e => {
+    dragY = e.clientY; dragStart = current; dragMoved = false;
+  });
+  addEventListener('pointermove', e => {
+    if (dragY === null) return;
+    const dy = e.clientY - dragY;
+    if (Math.abs(dy) > 6) dragMoved = true;
+    const step = H * 0.6 + GAP;
+    const target = Math.round(dragStart - dy / step);
+    if (target !== current) go(target);
+  });
+  addEventListener('pointerup', () => { dragY = null; setTimeout(() => dragMoved = false, 0); });
+  addEventListener('pointercancel', () => { dragY = null; });
+
+  addEventListener('resize', () => { measure(); render(); });
+  root.addEventListener('scroll', () => { root.scrollTop = 0; root.scrollLeft = 0; });   // карусель никогда не прокручивается сама
+
+  // ----- старт -----
+  measure();
+  setInfo(0, false);
+  render();
+  requestAnimationFrame(() => document.body.classList.add('ready'));
+  root.focus({ preventScroll: true });
+})();
+</script>
+<script src="nav.js" data-current="commercial"></script>
+<script src="contacts.js"></script>
+</body>
+</html>
