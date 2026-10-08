@@ -50,7 +50,7 @@
   }
   .bg::after {
     content: ""; position: absolute; inset: 0; opacity: .09; mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* ===================== ЛЕНТА (как XMB у PSP, но по горизонтали) ===================== */
@@ -68,8 +68,14 @@
     border-radius: 2px; overflow: hidden;
     background: #ececf0;
     box-shadow: 0 0 0 1px rgba(255,255,255,.18);
-    will-change: transform, width, height, opacity;
+    will-change: transform, opacity;
     cursor: pointer;
+  }
+  /* оптимизация: размер окошка постоянный, уменьшается трансформацией;
+     затемнение — чёрный слой с прозрачностью вместо filter: brightness */
+  .item::after {
+    content: ""; position: absolute; inset: 0; background: #000; pointer-events: none;
+    opacity: calc(1 - var(--br, 1) * var(--hb));
   }
   .item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
   .item .ph { width: 100%; height: 100%; display: grid; place-items: center;
@@ -77,7 +83,7 @@
   .item.active { cursor: pointer; box-shadow: 0 0 0 1px rgba(255,255,255,.6), 0 24px 70px rgba(0,0,0,.5); }
 
   @property --hs { syntax: '<number>'; inherits: false; initial-value: 1; }
-  @property --hb { syntax: '<number>'; inherits: false; initial-value: 1; }
+  @property --hb { syntax: '<number>'; inherits: true; initial-value: 1; }   /* true — чтобы видел слой затемнения ::after */
   .item { transition: --hs .35s cubic-bezier(.34, 1.56, .64, 1), --hb .3s ease, box-shadow .3s ease; }
   @media (hover: hover) {
     .item:not(.active):hover { --hs: 1.07; --hb: 1.25; box-shadow: 0 0 0 1px rgba(255,255,255,.45), 0 12px 40px rgba(0,0,0,.4); }
@@ -102,7 +108,19 @@
     pointer-events: none;
   }
 
+  /* стрелки на соседних работах — только на телефоне */
+  .car-arrow {
+    position: fixed; z-index: 20; translate: -50% -50%;
+    width: 64px; height: 64px;
+    display: none; place-items: center;
+    color: rgba(255, 255, 255, .7);
+    filter: drop-shadow(0 1px 6px rgba(0, 0, 0, .55));
+    -webkit-tap-highlight-color: transparent;
+  }
+  .car-arrow svg { width: 38px; height: 38px; }
+  .car-arrow:active { color: #fff; }
   @media (max-width: 760px) {
+    .car-arrow { display: grid; }
     .page { padding-top: 144px; }
     .hint { display: none; }
   }
@@ -161,6 +179,8 @@
       ? Math.min(r.height * 0.6, r.width * 0.7)           // телефон
       : Math.min(r.height * 0.7, r.width * 0.3, 440);     // высота активной работы
     GAP = Math.max(18, H * 0.08);
+    // размер всех окошек постоянный — в render() они только масштабируются
+    items.forEach(it => { it.el.style.width = H * it.ratio + 'px'; it.el.style.height = H + 'px'; });
   }
   const scaleAt = a => {
     const k1 = Math.min(a, 1), k2 = Math.min(Math.max(a - 1, 0), 1);
@@ -191,15 +211,13 @@
   function render() {
     items.forEach((it, i) => {
       const d = wrap(i - shown), a = Math.abs(d);
-      const { w, h } = sizeOf(it, a);
       const x = Math.sign(d) * posAt(a);
       const op = a < 2 ? 1 - a * 0.18 : Math.max(0, 0.64 - (a - 2) * 0.35);
       const br = 1 - Math.min(a, 3) * 0.22;
-      it.el.style.width = w + 'px';
-      it.el.style.height = h + 'px';
-      it.el.style.transform = `translate(-50%, -50%) translateX(${x}px) scale(var(--hs))`;
+      // окошко постоянного размера, уменьшается только масштабом (формат у всех один)
+      it.el.style.transform = `translate(-50%, -50%) translateX(${x}px) scale(var(--hs)) scale(${scaleAt(a)})`;
       it.el.style.opacity = op;
-      it.el.style.filter = `brightness(calc(${br.toFixed(3)} * var(--hb)))`;
+      it.el.style.setProperty('--br', br.toFixed(3));
       it.el.style.zIndex = 100 - Math.round(a * 10);
       it.el.style.visibility = op <= 0 ? 'hidden' : 'visible';
       it.el.classList.toggle('active', i === mod(current, n));
@@ -253,17 +271,45 @@
     if (Math.abs(wheelAcc) > 40) { go(current + Math.sign(wheelAcc)); wheelAcc = 0; wheelLock = now + 240; }
   }, { passive: false });
 
-  let dragX = null, dragStart = 0, dragMoved = false;
-  strip.addEventListener('pointerdown', e => { dragX = e.clientX; dragStart = current; dragMoved = false; });
+  // свайп пальцем / перетаскивание мышью: провёл — листнулось на одну работу
+  let dragX = null, dragMoved = false;
+  strip.addEventListener('pointerdown', e => { dragX = e.clientX; dragMoved = false; });
   addEventListener('pointermove', e => {
-    if (dragX === null) return;
-    const dx = e.clientX - dragX;
-    if (Math.abs(dx) > 6) dragMoved = true;
-    const t = Math.round(dragStart - dx / (H * 0.45));
-    if (t !== current) go(t);
+    if (dragX !== null && Math.abs(e.clientX - dragX) > 6) dragMoved = true;
   });
-  addEventListener('pointerup', () => { dragX = null; setTimeout(() => dragMoved = false, 0); });
+  const endDrag = e => {
+    if (dragX === null) return;
+    const dx = (e.clientX ?? dragX) - dragX;
+    dragX = null;
+    if (Math.abs(dx) > 30) go(current + (dx < 0 ? 1 : -1));
+    setTimeout(() => dragMoved = false, 0);
+  };
+  addEventListener('pointerup', endDrag);
   addEventListener('pointercancel', () => { dragX = null; });
+
+  // стрелки на соседних работах (телефон): ‹ — предыдущая, › — следующая.
+  // Стоят вне ленты (у неё маска растворения), позиция — по центрам соседних окошек
+  const chev = d => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5"
+    stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="${d}"/></svg>`;
+  const arrows = [
+    ['left',  'Предыдущая работа', 'M31 9 16 24l15 15', -1],
+    ['right', 'Следующая работа',  'M17 9l15 15-15 15',  1],
+  ].map(([cls, label, d, step]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = `car-arrow ${cls}`; b.setAttribute('aria-label', label);
+    b.innerHTML = chev(d);
+    b.addEventListener('click', () => go(current + step));
+    document.body.appendChild(b);
+    return b;
+  });
+  function placeArrows() {
+    const r = strip.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, d = posAt(1);
+    arrows[0].style.top = arrows[1].style.top = cy + 'px';
+    // на узком экране центры соседей за краем — держим стрелки на видимой части окошек
+    arrows[0].style.left = Math.max(32, cx - d) + 'px';
+    arrows[1].style.left = Math.min(innerWidth - 32, cx + d) + 'px';
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(placeArrows).observe(strip);
 
   /* ---------- страница работы ---------- */
   const openWork = i => (window.vbGo || (u => location.href = u))(`work.html?w=${i}`);
@@ -277,7 +323,7 @@
     if (e.key === 'Escape') (window.vbGo || (u => location.href = u))('index.html#menu');
   });
 
-  addEventListener('resize', () => { measure(); render(); });
+  addEventListener('resize', () => { measure(); render(); placeArrows(); });
   strip.addEventListener('scroll', () => { strip.scrollLeft = 0; strip.scrollTop = 0; });
 
   measure();

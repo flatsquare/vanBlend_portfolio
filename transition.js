@@ -18,7 +18,8 @@
 (() => {
   const KEY = 'vb_tr';
   const OUT_MS = 260, IN_MS = 400;
-  const SHIFT = 144;                   // насколько сдвигается страница, px
+  // насколько сдвигается страница, px: на компьютере 144, на телефоне ~15% ширины экрана
+  const SHIFT = Math.min(144, Math.round(innerWidth * 0.15));
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---- где стоит каждая страница на схеме: [столбец, ряд] ---- */
@@ -99,11 +100,12 @@
 
   /* ---- уход: страница гаснет со сдвигом, потом переход ---- */
   let leaving = false;
-  function go(url) {
+  // hint — направление сдвига, если его не вывести из схемы (например, соседняя карточка)
+  function go(url, hint) {
     if (leaving) return;
     if (reduce) { location.href = url; return; }
     leaving = true;
-    const d = dirBetween(location.href, url) || 'fade';
+    const d = (FX[hint] && hint) || dirBetween(location.href, url) || 'fade';
     try { sessionStorage.setItem(KEY, d); } catch (e) {}
     document.body.classList.add('vb-leaving', `vb-out-${d}`);
     setTimeout(() => { location.href = url; }, OUT_MS);
@@ -125,6 +127,6 @@
     const href = a.getAttribute('href');
     if (/^(mailto:|tel:|https?:|#)/i.test(href)) return;
     e.preventDefault();
-    go(a.href);
+    go(a.href, a.dataset.dir);
   });
 })();

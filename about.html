@@ -50,7 +50,7 @@
   }
   .bg::after {
     content: ""; position: absolute; inset: 0; opacity: .09; mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* ===================== РАСКЛАДКА ===================== */
@@ -113,7 +113,9 @@
     font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #fff;
     opacity: 0; pointer-events: none; transition: opacity .2s ease, translate .2s ease;
   }
+  @media (hover: hover) {
   .soft li:hover { transform: translateY(-3px) scale(1.08); }
+  }
   .soft li:hover::after { opacity: 1; translate: -50% 0; }
   @media (hover: none) { .soft li::after { display: none; } }   /* на сенсорных экранах наведения нет */
   /* ----- контакты справа от текста, через пунктир ----- */
@@ -144,8 +146,12 @@
   .link .k { font-size: clamp(17px, 1.5vw, 21px); letter-spacing: .16em; text-transform: uppercase; }
   .link .v { font-size: 12px; font-weight: 300; letter-spacing: .08em; color: var(--muted); margin-left: auto; }
   .link .arr { font-size: 15px; color: var(--muted); transition: transform .35s ease, color .3s ease; }
+  @media (hover: hover) {
   .link:hover, .link:focus-visible { color: var(--accent); padding-left: 10px; outline: none; }
+  }
+  @media (hover: hover) {
   .link:hover .arr, .link:focus-visible .arr { color: var(--accent); transform: translate(3px, -3px); }
+  }
 
   /* ===================== ТЕЛЕФОН ===================== */
   /* узко: портрет | текст, ниже иконки, ещё ниже контакты */

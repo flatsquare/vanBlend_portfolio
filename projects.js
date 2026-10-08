@@ -16,11 +16,11 @@
 const SHOTS_PLACEHOLDER = () => [1, 2, 3, 4].map(() => ({ render: '', clay: '', wire: '' }));
 
 const PROJECTS = [
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
-  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: '', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p1.jpg', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p2.jpg', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p3.jpg', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p4.jpg', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p5.jpg', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p6.jpg', shots: SHOTS_PLACEHOLDER() },
+  { title: 'Название проекта', client: 'Лого клиента', logo: '', cover: 'img/projects/p7.jpg', shots: SHOTS_PLACEHOLDER() },
 ];
