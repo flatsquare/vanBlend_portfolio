@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Проект — van_blend</title>
-<script src="transition.js"></script>
+<script src="transition.js?v=202610122055"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0d0d10;
@@ -147,6 +147,7 @@
   .title {
     font-size: clamp(22px, 2.2vw, 34px);
     font-weight: 200; line-height: 1.2;
+    color: var(--accent);                /* название проекта — фирменным фиолетовым */
     letter-spacing: .12em; text-transform: uppercase;
   }
   .logo {
@@ -158,12 +159,21 @@
     font-size: 13px; letter-spacing: .2em; text-transform: uppercase;
   }
   .logo.has-img { border: 0; padding: 0; }
+  /* без логотипа — просто подпись заказчика, без рамки */
+  .logo.as-text { border: 0; padding: 0; height: auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .logo.as-text .k { font-size: 11px; letter-spacing: .3em; color: var(--muted); }
+  .logo.as-text b { font-size: clamp(16px, 1.3vw, 19px); font-weight: 500; letter-spacing: .14em; color: #b4e86a; }   /* салатовый — дополнительный к фиолетовому */
   .logo img { max-height: 48px; max-width: 180px; display: block; }
 
   /* информация о проекте — между логотипом и просмотрщиком */
   .about { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 18px; }
+  /* длинное описание на невысоком экране прокручивается — полоса тонкая и тихая */
+  .about { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; padding-right: 6px; }
+  .about::-webkit-scrollbar { width: 3px; }
+  .about::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 2px; }
+  .about::-webkit-scrollbar-track { background: transparent; }
   .about p {
-    font-size: 14px; font-weight: 300; line-height: 1.7; letter-spacing: .04em;
+    font-size: 16px; font-weight: 300; line-height: 1.65; letter-spacing: .03em;
     color: #c4c4cc; max-width: 42ch;
   }
   .about dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
@@ -171,57 +181,15 @@
   .about dd { color: #c4c4cc; }
   .about.is-ph p, .about.is-ph dd { color: var(--muted); opacity: .55; }   /* заглушка, пока нет текста */
 
-  /* просмотрщик: переключатель вида над миниатюрами, прижат к низу панели */
+  [hidden] { display: none !important; }   /* у сетки и стрелок свой display — hidden должен побеждать */
+
+  /* миниатюры кадров — прижаты к низу панели */
   .viewer-ctl { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
 
-  /* переключатель вида: рендер / меш / wireframe — три равных сегмента в рамке */
-  .switch { display: flex; flex-direction: column; gap: 4px; }
-  .modes {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    border: 1px solid rgba(255,255,255,.22); border-radius: 2px;
-  }
-  .mode {
-    position: relative;
-    min-height: 40px; padding: 6px 4px;
-    display: grid; place-items: center;
-    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
-    color: var(--muted);
-    transition: color .3s ease, background-color .3s ease;
-  }
-  .mode + .mode { border-left: 1px solid rgba(255,255,255,.22); }
-  @media (hover: hover) {
-  .mode:hover, .mode:focus-visible { color: #fff; background: rgba(255,255,255,.04); outline: none; }
-  }
-  .mode[aria-pressed="true"] { color: #fff; background: rgba(255,255,255,.08); }
-
-  /* ползунок под сегментами: фиолетовая ручка ездит к выбранному виду.
-     Можно кликнуть по дорожке или потащить ручку — она встаёт на ближайший вид */
-  .track {
-    --i: 0;                              /* номер выбранного вида, ставится из скрипта */
-    position: relative; height: 26px;
-    cursor: pointer; touch-action: none; outline: none;
-  }
-  .track::before {                       /* сама дорожка */
-    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 10px; translate: 0 -50%;
-    border: 1px solid rgba(255,255,255,.28); border-radius: 999px;
-    background: rgba(255,255,255,.04);
-  }
-  .knob {
-    position: absolute; top: 50%;
-    left: calc((var(--i) + .5) / 3 * 100%);
-    width: 22px; height: 22px; translate: -50% -50%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #c39bff, var(--accent) 55%, #6a2fd6);
-    box-shadow: 0 0 14px rgba(157, 92, 255, .7), 0 2px 6px rgba(0,0,0,.5);
-    transition: left .45s cubic-bezier(.34, 1.4, .64, 1), scale .25s ease;
-  }
-  @media (hover: hover) {
-  .track:hover .knob, .track:focus-visible .knob { scale: 1.15; }
-  }
-  .track.drag .knob { scale: 1.2; transition: scale .25s ease; }
-
   /* миниатюры ракурсов */
-  .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }  .thumb {
+  /* колонки — по количеству кадров (--cols ставит скрипт): 2 → 2, 3 → 3, 4 → 2×2; один кадр — без миниатюр */
+  .thumbs { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 10px; }
+  .thumb {
     position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 2px;
     box-shadow: 0 0 0 1px rgba(255,255,255,.18);
     filter: brightness(.6);
@@ -259,7 +227,7 @@
   /* ===================== ТЕЛЕФОН ===================== */
   @media (max-width: 760px) {
     .prev-tab { top: 6px; left: 4px; width: 60px; height: 60px; }
-    html, body { overflow: auto; }
+    html, body { height: auto; overflow: visible; }   /* прокручивается сама страница — так надёжнее на iOS (и адресная строка прячется) */
     .page { height: auto; min-height: 100dvh; grid-template-columns: 1fr; padding: 76px 16px 40px; gap: 16px; }
     /* порядок на телефоне: кадр → вид и миниатюры (управление рядом с кадром) → название, лого, описание */
     .side { display: contents; }
@@ -267,9 +235,9 @@
     .title { order: 2; margin-top: 16px; padding-top: 24px; border-top: 1px dashed var(--line); }
     .logo { order: 3; justify-self: start; }
     .about { order: 4; }
-    .mode { font-size: 11px; letter-spacing: .12em; }
-    .thumbs { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .thumbs { grid-template-columns: repeat(var(--cols-m, 4), 1fr); gap: 8px; }   /* на телефоне все в один ряд */
     .about { overflow: visible; }
+    .about p { font-size: 15px; }
     .arrow { opacity: .5; width: 22%; }
     .hint { display: none; }
   }
@@ -288,13 +256,6 @@
   <div class="blob b-gray"></div>
 </div>
 
-<a class="prev-tab" href="commercial.html" aria-label="Назад к коммерческим проектам" title="Назад к проектам">
-  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">
-    <path d="M23 9 8 24l15 15"/>
-    <path d="M38 9 23 24l15 15"/>
-  </svg>
-</a>
-
 <main class="page">
   <section class="stage-wrap">
     <div class="stage" id="stage" aria-live="polite">
@@ -311,41 +272,31 @@
     <div class="about" id="about"></div>
 
     <div class="viewer-ctl">
-      <div class="switch">
-        <div class="modes" role="group" aria-label="Вид">
-          <button class="mode" type="button" data-mode="render">рендер</button>
-          <button class="mode" type="button" data-mode="clay">меш</button>
-          <button class="mode" type="button" data-mode="wire">wireframe</button>
-        </div>
-        <div class="track" id="track" role="slider" tabindex="0" aria-label="Вид" aria-valuemin="1" aria-valuemax="3">
-          <span class="knob"></span>
-        </div>
-      </div>
-      <div class="thumbs" id="thumbs" aria-label="Ракурсы"></div>
+      <div class="thumbs" id="thumbs" aria-label="Кадры"></div>
     </div>
 
-    <div class="hint" aria-hidden="true">← → ракурс · 1 2 3 вид</div>
+    <div class="hint" id="hint" aria-hidden="true">← → кадры</div>
   </aside>
 </main>
 
-<script src="detail.js"></script>
-<script src="projects.js"></script>
+<script src="nav.js?v=202610122055" data-parent="commercial"></script>
+<script src="contacts.js?v=202610122055"></script>
+<script src="detail.js?v=202610122055"></script>
+<script src="projects.js?v=202610122055"></script>
 <script>
 (() => {
-  const MODES = ['render', 'clay', 'wire'];
-  const MODE_NAME = { render: 'рендер', clay: 'меш', wire: 'wireframe' };
-
   // какой проект открыт: project.html?p=0
   const idx = Math.max(0, Math.min(PROJECTS.length - 1, parseInt(new URLSearchParams(location.search).get('p'), 10) || 0));
   const p = PROJECTS[idx];
-  // «назад: проекты» + соседи справа сверху (detail.js)
+  // соседи под меню справа (detail.js); назад в список — вкладка «коммерческие» в меню
   vbDetail({ page: 'project.html', param: 'p', index: idx, count: PROJECTS.length, upLabel: 'проекты', labels: ['Предыдущий проект', 'Следующий проект'] });
-  const shots = p.shots && p.shots.length ? p.shots : [{ render: '', clay: '', wire: '' }];
+  const shots = p.shots && p.shots.length ? p.shots : [{ src: '', thumb: '' }];
 
   const stage = document.getElementById('stage');
   const countEl = document.getElementById('count');
   const thumbsEl = document.getElementById('thumbs');
-  const modeBtns = [...document.querySelectorAll('.mode')];
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   // ----- шапка -----
   document.title = `${p.title} — van_blend`;
@@ -356,57 +307,60 @@
     logoEl.innerHTML = `<img src="${p.logo}" alt="${p.client}">`;
   } else {
     logoEl.textContent = p.client || 'logo';
+    if (p.about) {                                    // готовый проект без логотипа — заказчик просто текстом:
+      logoEl.classList.add('as-text');                // «заказчик:» мелко + название крупнее и жирнее
+      logoEl.innerHTML = `<span class="k">заказчик:</span><b>${esc(p.client || '')}</b>`;
+    }
   }
 
   // ----- информация о проекте (about и meta в projects.js; пусто — заглушка) -----
   const aboutEl = document.getElementById('about');
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const about = p.about || 'Описание проекта: задача от клиента, идея и что было сделано. Два-три коротких предложения.';
-  const meta = p.meta && p.meta.length ? p.meta : [['год', '2026'], ['задача', 'моделинг · рендер'], ['софт', 'blender']];
+  // строки «год / задача / софт»: свои — из meta; у проекта с готовым описанием без meta — не показываем
+  const meta = p.meta && p.meta.length ? p.meta : p.about ? [] : [['год', '2026'], ['задача', 'моделинг · рендер'], ['софт', 'blender']];
   aboutEl.classList.toggle('is-ph', !p.about);
-  aboutEl.innerHTML = `<p>${esc(about)}</p><dl>${meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+  aboutEl.innerHTML = `<p>${esc(about)}</p>${meta.length ? `<dl>${meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}`;
 
-  const fill = (src, mode, label) => src
-    ? `<img src="${src}" alt="" draggable="false">`
-    : `<div class="ph ph-${mode}">${label}</div>`;
+  const fill = (src, label, lazy) => src
+    ? `<img src="${src}" alt="" draggable="false"${lazy ? ' loading="lazy"' : ''}>`
+    : `<div class="ph ph-clay">${label}</div>`;
 
-  // ----- слои сцены: для каждого ракурса по три картинки -----
-  const layers = shots.map((s, i) => MODES.map(m => {
+  // ----- слои сцены: по слою на кадр (первый грузится сразу, остальные — лениво) -----
+  const layers = shots.map((s, i) => {
     const el = document.createElement('div');
     el.className = 'layer';
-    el.innerHTML = fill(s[m], m, `${MODE_NAME[m]} · ракурс ${i + 1}`);
+    el.innerHTML = fill(s.src, `кадр ${i + 1}`, i > 0);
     stage.insertBefore(el, countEl);
     return el;
-  }));
+  });
 
-  // ----- миниатюры -----
+  // ----- миниатюры: сетка под количество кадров (2 → 2, 3 → 3, 4 → 2×2);
+  //       один кадр — без миниатюр, стрелок и счётчика -----
+  const many = shots.length > 1;
+  thumbsEl.style.setProperty('--cols', shots.length === 4 ? 2 : shots.length);
+  thumbsEl.style.setProperty('--cols-m', shots.length);
+  thumbsEl.hidden = !many;
+  document.getElementById('hint').hidden = !many;
+  document.getElementById('prev').hidden = document.getElementById('next').hidden = !many;
+  countEl.hidden = !many;
   const thumbs = shots.map((s, i) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'thumb';
-    b.setAttribute('aria-label', `Ракурс ${i + 1}`);
+    b.setAttribute('aria-label', `Кадр ${i + 1}`);
+    b.innerHTML = fill(s.thumb || s.src, String(i + 1).padStart(2, '0'), false);
     b.addEventListener('click', () => setShot(i));
     thumbsEl.appendChild(b);
     return b;
   });
 
   // ----- состояние -----
-  let shot = 0, mode = 'render';
+  let shot = 0;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function render() {
-    layers.forEach((row, i) => row.forEach((el, m) =>
-      el.classList.toggle('on', i === shot && MODES[m] === mode)));
-    // миниатюры показывают текущий вид (рендер / меш / сетку)
-    thumbs.forEach((b, i) => {
-      b.innerHTML = fill(shots[i][mode], mode, String(i + 1).padStart(2, '0'));
-      b.setAttribute('aria-current', i === shot);
-    });
-    modeBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode));
-    const mi = MODES.indexOf(mode);
-    track.style.setProperty('--i', mi);
-    track.setAttribute('aria-valuenow', mi + 1);
-    track.setAttribute('aria-valuetext', MODE_NAME[mode]);
+    layers.forEach((el, i) => el.classList.toggle('on', i === shot));
+    thumbs.forEach((b, i) => b.setAttribute('aria-current', i === shot));
     countEl.textContent = `${String(shot + 1).padStart(2, '0')} / ${String(shots.length).padStart(2, '0')}`;
   }
   // смена ракурса — кадр уезжает в сторону листания, следующий въезжает с другой стороны
@@ -416,38 +370,16 @@
     shot = (i + shots.length) % shots.length;
     render();
     if (shot === prev || !d || reduceMotion) return;
-    const mi = MODES.indexOf(mode), EASE = 'cubic-bezier(.2, .8, .2, 1)';
-    layers[shot][mi].animate(
+    const EASE = 'cubic-bezier(.2, .8, .2, 1)';
+    layers[shot].animate(
       [{ transform: `translateX(${d * 35}%)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 480, easing: EASE });
-    layers[prev][mi].animate(
+    layers[prev].animate(
       [{ transform: 'none', opacity: 1 }, { transform: `translateX(${-d * 35}%)`, opacity: 0 }],
       { duration: 480, easing: EASE });
   };
-  const setMode = m => { mode = m; render(); };
 
   // ----- управление -----
-  modeBtns.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
-
-  // ползунок: клик по дорожке или перетаскивание ручки — вид под пальцем
-  const track = document.getElementById('track');
-  const modeAt = x => {
-    const r = track.getBoundingClientRect();
-    return MODES[Math.max(0, Math.min(2, Math.floor((x - r.left) / r.width * 3)))];
-  };
-  track.addEventListener('pointerdown', e => {
-    track.setPointerCapture(e.pointerId);
-    track.classList.add('drag');
-    setMode(modeAt(e.clientX));
-  });
-  track.addEventListener('pointermove', e => {
-    if (!track.classList.contains('drag')) return;
-    const m = modeAt(e.clientX);
-    if (m !== mode) setMode(m);
-  });
-  const stopDrag = () => track.classList.remove('drag');
-  track.addEventListener('pointerup', stopDrag);
-  track.addEventListener('pointercancel', stopDrag);
   document.getElementById('prev').addEventListener('click', e => { e.stopPropagation(); setShot(shot - 1); });
   document.getElementById('next').addEventListener('click', e => { e.stopPropagation(); setShot(shot + 1); });
 
@@ -457,12 +389,9 @@
   addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') setShot(shot + 1);
     else if (e.key === 'ArrowLeft') setShot(shot - 1);
-    else if (e.key === 'ArrowDown') setMode(MODES[(MODES.indexOf(mode) + 1) % 3]);
-    else if (e.key === 'ArrowUp') setMode(MODES[(MODES.indexOf(mode) + 2) % 3]);
-    else if (e.key >= '1' && e.key <= '3') setMode(MODES[+e.key - 1]);
     else if (e.key === 'Escape') {
       if (document.body.classList.contains('zoom')) document.body.classList.remove('zoom');
-      else (window.vbGo || (u => location.href = u))('commercial.html');
+      else (window.vbGo || (u => location.href = u))(`commercial.html?at=${idx}`);   // в список — на этот проект
       return;
     } else return;
     e.preventDefault();
@@ -488,7 +417,7 @@
    ПОЯВЛЕНИЕ КАРТОЧКИ ПРОЕКТА — в три шага:
    1) в центре экрана проявляется кадр (сцена);
    2) справа выезжает панель с названием и сдвигает кадр влево;
-   3) сверху опускается стрелка «назад», а всё съезжает вниз, на место.
+   3) сверху опускается меню, а всё съезжает вниз, на место.
    Анимируются только opacity, translate и scale (Web Animations API) — без нагрузки.
    На телефоне и при «уменьшить движение» — без этого вступления.
    ===================================================================== */
@@ -499,7 +428,7 @@
   const wrap = document.querySelector('.stage-wrap');
   const stage = document.getElementById('stage');
   const side = document.querySelector('.side');
-  const back = document.querySelector('.prev-tab');
+  const back = document.querySelector('.vb-nav');
   if (!wrap || !side || !back) return;
 
   // смещения считаются по раскладке (offset*), трансформации переходов на них не влияют
@@ -528,12 +457,12 @@
     { offset: B, translate: t(0, dy0),      opacity: 1, easing: EASE },
     { offset: 1, translate: t(0, 0),        opacity: 1 },
   ], opt);
-  // стрелка «назад»: опускается сверху на шаге 3
-  back.animate([
+  // меню (и соседи под ним): опускаются сверху на шаге 3
+  [back, document.querySelector('.sib')].filter(Boolean).forEach(el => el.animate([
     { offset: 0, translate: t(0, dyBack), opacity: 0 },
     { offset: B, translate: t(0, dyBack), opacity: 0, easing: EASE },
     { offset: 1, translate: t(0, 0),      opacity: 1 },
-  ], opt);
+  ], opt));
 })();
 </script>
 </body>

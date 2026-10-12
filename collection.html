@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Коллекция — van_blend</title>
-<script src="transition.js"></script>
+<title>Личные проекты — van_blend</title>
+<script src="transition.js?v=202610122055"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
@@ -108,16 +108,28 @@
     pointer-events: none;
   }
 
+  /* во весь экран — затемнение и картинка целиком */
+  .full {
+    position: fixed; inset: 0; z-index: 100;
+    display: grid; place-items: center;
+    background: rgba(13, 13, 16, .94);
+    opacity: 0; pointer-events: none; transition: opacity .3s ease;
+    cursor: zoom-out; -webkit-tap-highlight-color: transparent;
+  }
+  .full.open { opacity: 1; pointer-events: auto; }
+  .full img { display: block; max-width: 94vw; max-height: 90vh; max-height: 90dvh; object-fit: contain; border-radius: 2px; box-shadow: 0 30px 90px rgba(0,0,0,.6); }
+  .item.active { cursor: zoom-in; }
+
   /* стрелки на соседних работах — только на телефоне */
   .car-arrow {
     position: fixed; z-index: 20; translate: -50% -50%;
-    width: 64px; height: 64px;
+    width: 36px; height: 72px;
     display: none; place-items: center;
     color: rgba(255, 255, 255, .7);
     filter: drop-shadow(0 1px 6px rgba(0, 0, 0, .55));
     -webkit-tap-highlight-color: transparent;
   }
-  .car-arrow svg { width: 38px; height: 38px; }
+  .car-arrow svg { width: 34px; height: 34px; }
   .car-arrow:active { color: #fff; }
   @media (max-width: 760px) {
     .car-arrow { display: grid; }
@@ -144,9 +156,12 @@
 </main>
 
 <div class="counter" id="counter"></div>
-<div class="hint" aria-hidden="true">← → листать</div>
+<div class="hint" aria-hidden="true">← → листать · клик — во весь экран</div>
 
-<script src="works.js"></script>
+<!-- картинка во весь экран; закрывается кликом или Esc -->
+<div class="full" id="full" role="dialog" aria-modal="true" aria-label="Работа во весь экран"><img alt=""></div>
+
+<script src="works.js?v=202610122055"></script>
 <script>
 (() => {
   const strip = document.getElementById('strip');
@@ -165,7 +180,7 @@
     const it = { el, ratio: CARD_RATIO };
     el.addEventListener('click', () => {
       if (dragMoved) return;
-      if (i === mod(current, n)) openWork(i); else goTo(i);   // активная — открыть страницу работы
+      if (i === mod(current, n)) openFull(i); else goTo(i);   // активная — во весь экран
     });
     strip.appendChild(el);
     return it;
@@ -175,9 +190,10 @@
   let H, GAP;
   function measure() {
     const r = strip.getBoundingClientRect();
+    // высота активной работы; ширина = H × CARD_RATIO
     H = r.width < 700
-      ? Math.min(r.height * 0.6, r.width * 0.7)           // телефон
-      : Math.min(r.height * 0.7, r.width * 0.3, 440);     // высота активной работы
+      ? Math.min(r.height * 0.6, r.width * 0.78 / CARD_RATIO)          // телефон: ~78% ширины экрана
+      : Math.min(r.height * 0.72, r.width * 0.42 / CARD_RATIO, 480);   // компьютер: ~40% ширины
     GAP = Math.max(18, H * 0.08);
     // размер всех окошек постоянный — в render() они только масштабируются
     items.forEach(it => { it.el.style.width = H * it.ratio + 'px'; it.el.style.height = H + 'px'; });
@@ -236,6 +252,7 @@
   const caption = document.getElementById('caption');
   const cTitle = document.getElementById('cTitle'), cYear = document.getElementById('cYear');
   const counter = document.getElementById('counter');
+  caption.hidden = !WORKS.some(w => w.title || w.year);   // названий пока нет — подпись не показываем, лента выше
   let capTimer;
   const pad = v => String(v).padStart(2, '0');
   function setCaption(i, animate = true) {
@@ -302,38 +319,63 @@
     document.body.appendChild(b);
     return b;
   });
+  // координаты по раскладке (offset*), а не по экрану: при переходах страница сдвинута/увеличена,
+  // и экранные координаты уводили стрелки в сторону
+  const layoutRect = el => { let x = 0, y = 0, e = el; while (e) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { cx: x + el.offsetWidth / 2, cy: y + el.offsetHeight / 2 }; };
+  // стрелки вплотную к центральной работе — слева и справа от её краёв, на неё не заходят
+  // (кнопка шириной 36px, центр в 19px от рамки)
   function placeArrows() {
-    const r = strip.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, d = posAt(1);
+    const { cx, cy } = layoutRect(strip), d = H * CARD_RATIO / 2 + 19;
     arrows[0].style.top = arrows[1].style.top = cy + 'px';
-    // на узком экране центры соседей за краем — держим стрелки на видимой части окошек
-    arrows[0].style.left = Math.max(32, cx - d) + 'px';
-    arrows[1].style.left = Math.min(innerWidth - 32, cx + d) + 'px';
+    arrows[0].style.left = Math.max(18, cx - d) + 'px';
+    arrows[1].style.left = Math.min(innerWidth - 18, cx + d) + 'px';
   }
   if ('ResizeObserver' in window) new ResizeObserver(placeArrows).observe(strip);
 
-  /* ---------- страница работы ---------- */
-  const openWork = i => (window.vbGo || (u => location.href = u))(`work.html?w=${i}`);
+  /* ---------- во весь экран (отдельной страницы у работы нет — по одной картинке) ---------- */
+  const full = document.getElementById('full'), fullImg = full.querySelector('img');
+  const isOpen = () => full.classList.contains('open');
+  function openFull(i) {
+    if (!WORKS[i].src) return;
+    fullImg.src = WORKS[i].src;
+    full.classList.add('open');
+  }
+  const closeFull = () => full.classList.remove('open');
+  full.addEventListener('click', closeFull);
 
   addEventListener('keydown', e => {
+    if (isOpen()) {                                   // открыта картинка: ← → листают, Esc / Enter закрывают
+      if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); closeFull(); }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault(); go(current + (e.key === 'ArrowRight' ? 1 : -1)); openFull(mod(current, n));
+      }
+      return;
+    }
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); go(current + 1); }
     if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); go(current - 1); }
     if (e.key === 'Home') goTo(0);
     if (e.key === 'End') goTo(n - 1);
-    if (e.key === 'Enter') openWork(mod(current, n));
+    if (e.key === 'Enter') openFull(mod(current, n));
     if (e.key === 'Escape') (window.vbGo || (u => location.href = u))('index.html#menu');
   });
 
   addEventListener('resize', () => { measure(); render(); placeArrows(); });
   strip.addEventListener('scroll', () => { strip.scrollLeft = 0; strip.scrollTop = 0; });
 
+  // вернулись с карточки работы (collection.html?at=N) — лента сразу стоит на этой работе
+  const at = parseInt(new URLSearchParams(location.search).get('at'), 10);
+  if (at >= 0 && at < n) current = shown = at;
+
   measure();
-  setCaption(0, false);
+  setCaption(mod(current, n), false);
   render();
+  placeArrows();                                      // стрелки — после первого расчёта размеров
+  addEventListener('load', placeArrows);              // и ещё раз, когда догрузятся шрифты и меню
   requestAnimationFrame(() => document.body.classList.add('ready'));
   strip.focus({ preventScroll: true });
 })();
 </script>
-<script src="nav.js" data-current="collection"></script>
-<script src="contacts.js"></script>
+<script src="nav.js?v=202610122055" data-current="collection"></script>
+<script src="contacts.js?v=202610122055"></script>
 </body>
 </html>

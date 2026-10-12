@@ -15,10 +15,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>van_blend — портфолио</title>
-<script src="transition.js"></script>
+<script src="transition.js?v=202610122055"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0d0d10;
@@ -115,13 +115,71 @@
   }
   .fx:focus-visible { outline: none; }
 
-  /* ---------- меню ---------- */
-  .menu { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(18px, 2.4vw, 30px); }
+  /* ---------- меню (по схеме):
+       • проекты:            ← серый заголовок, не ссылка
+           — коммерческие
+           — личные
+       • связь
+           [ tg / whatsapp / почта  ← скобка слева
+     ---------- */
+  .menu { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(30px, 4.5vh, 52px); }
+  .group { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(12px, 1.8vh, 20px); }
+  /* заголовок группы с точкой слева */
+  .head {
+    position: relative; padding-left: 22px;
+    text-transform: uppercase;
+  }
+  .head::before {
+    content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%;
+    width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  }
+  .head.muted {                 /* «проекты:» — серым, чтоб не сильно бросалось */
+    font-size: clamp(13px, 1.1vw, 16px); letter-spacing: .32em;
+    color: var(--muted); opacity: .75;
+  }
+  .head.big { font-size: clamp(20px, 2.7vw, 36px); font-weight: 300; letter-spacing: .2em; }
+  .sub { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(10px, 1.6vh, 18px); padding-left: 22px; }
   .item {
+    display: flex; align-items: center;
     font-size: clamp(20px, 2.7vw, 36px);
     font-weight: 300;
     text-transform: uppercase;
     letter-spacing: .2em;
+  }
+  .item .dash { color: var(--muted); opacity: .6; margin-right: .6em; letter-spacing: 0; }
+
+  /* связь — выпадающий список: поверх страницы, ничего не сдвигает.
+     Компьютер — по наведению или клику, телефон — по касанию */
+  .contact { position: relative; }
+  .contact .drop {
+    position: absolute; left: 0; top: 100%;
+    padding-top: 14px;                    /* отступ внутри, чтобы наведение не «рвалось» на зазоре */
+    opacity: 0; transform: translateY(-8px); pointer-events: none;
+    transition: opacity .3s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+  }
+  .contact.open .drop, .contact:focus-within .drop { opacity: 1; transform: none; pointer-events: auto; }
+  @media (hover: hover) {
+    .contact:hover .drop { opacity: 1; transform: none; pointer-events: auto; }
+    .contact:hover > .head .fx::before { width: var(--line); margin-right: 20px; }
+    .contact:hover > .head .fx .t { background-position: 0 0; }
+  }
+  .contact.open > .head .fx::before { width: var(--line); margin-right: 20px; }
+  .contact.open > .head .fx .t { background-position: 0 0; }
+
+  /* список со скобкой слева «[» */
+  .contacts {
+    position: relative; margin-left: 46px; padding: 6px 0 6px 22px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+    border-left: 1px solid rgba(255, 255, 255, .5);
+  }
+  .contacts::before, .contacts::after {          /* верхний и нижний «зубцы» скобки */
+    content: ""; position: absolute; left: -1px; width: 14px; height: 1px; background: rgba(255, 255, 255, .5);
+  }
+  .contacts::before { top: 0; }
+  .contacts::after { bottom: 0; }
+  .contacts .fx {
+    --line: 24px;
+    font-size: clamp(14px, 1.25vw, 18px); font-weight: 300; letter-spacing: .26em; text-transform: uppercase;
   }
 
 
@@ -154,11 +212,78 @@
   .nick:hover span, .nick:focus-visible span { color: #1f6bff; }
   }
 
+  /* ---------- «обо мне» под ником: тихая кнопка, по клику вниз выезжает пара строк.
+       Компьютер — текст выезжает поверх, фото и ник не сдвигаются;
+       телефон — раздвигает страницу (меню съезжает ниже) ---------- */
+  .about { position: relative; display: flex; flex-direction: column; align-items: center; }
+  /* кнопка — небольшой чёрный полупрозрачный блок, буквы плотнее */
+  .about-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 14px 9px 18px;                    /* справа меньше — компенсирует разрядку букв */
+    background: rgba(8, 8, 10, .55);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, .1); border-radius: 2px;
+    font-size: 11px; font-weight: 500; letter-spacing: .35em; text-transform: uppercase;
+    color: #d4d4da;
+    transition: color .3s ease, border-color .3s ease;
+  }
+  .about-btn .chev {                               /* маленькая стрелка вниз */
+    width: 5px; height: 5px; margin: -3px -2px 0 -4px;
+    border-right: 1px solid currentColor; border-bottom: 1px solid currentColor;
+    rotate: 45deg; transition: rotate .35s ease, margin .35s ease;
+  }
+  .about.open .about-btn .chev { rotate: 225deg; margin-top: 3px; }
+  .about.open .about-btn { color: #fff; border-color: rgba(255, 255, 255, .28); }
+  @media (hover: hover) {
+    .about-btn:hover { color: var(--accent); border-color: rgba(157, 92, 255, .6); }
+  }
+  .about-btn:focus-visible { outline: none; color: var(--accent); border-color: rgba(157, 92, 255, .6); }
+
+  .about-drop {
+    position: absolute; top: 100%; left: 50%; translate: -50% 0;
+    width: clamp(260px, 26vw, 340px);
+    padding-top: 14px;
+    opacity: 0; transform: translateY(-8px); pointer-events: none;
+    transition: opacity .3s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+  }
+  .about.open .about-drop { opacity: 1; transform: none; pointer-events: auto; }
+  /* при открытии вся правая колонка (фото + ник + текст) поднимается на половину высоты текста,
+     чтобы блок целиком стоял по центру, напротив меню. --lift считает скрипт */
+  .side {
+    translate: 0 calc(-1 * var(--lift, 0px));
+    transition: opacity .8s ease, transform .8s ease, translate .55s cubic-bezier(.2, .8, .2, 1);
+    transition-delay: var(--d, 0s), var(--d, 0s), 0s;
+  }
+  /* .about-in — обёртка для анимации раскрытия на телефоне, содержимое — .about-card */
+  .about-card {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    text-align: center;
+  }
+  .role { font-size: 11px; font-weight: 300; letter-spacing: .22em; text-transform: uppercase; color: #c4c4cc; white-space: nowrap; }
+  .bio { font-size: 13px; font-weight: 300; line-height: 1.7; letter-spacing: .03em; color: var(--muted); }
+  .bio.is-ph { opacity: .6; }       /* заглушка, пока нет текста */
+  /* иконки софта — ряд над ролью; название — подсказкой при наведении */
+  .soft {
+    display: flex; flex-wrap: nowrap; justify-content: center; gap: clamp(6px, .7vw, 10px);   /* всегда в один ряд */
+    list-style: none; margin-bottom: 6px;
+  }
+  .soft li { flex: none; width: clamp(22px, 2.2vw, 28px); aspect-ratio: 1; transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); }
+  .soft img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  @media (hover: hover) { .soft li:hover { transform: translateY(-2px) scale(1.12); } }
+
   /* ---------- телефон ---------- */
   @media (max-width: 760px) {
     .hero { grid-template-columns: 1fr; align-content: center; gap: 48px; }
     .side { order: -1; }
     .item { letter-spacing: .14em; }
+    /* текст в потоке: плавно раскрывается по высоте и сдвигает меню */
+    .about-drop {
+      position: static; translate: none; width: min(100%, 320px);
+      display: grid; grid-template-rows: 0fr; padding-top: 0;
+      transition: grid-template-rows .4s cubic-bezier(.2, .8, .2, 1), opacity .3s ease, transform .35s ease, padding .4s ease;
+    }
+    .about-drop > .about-in { overflow: hidden; min-height: 0; }
+    .about.open .about-drop { grid-template-rows: 1fr; padding-top: 14px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -166,7 +291,7 @@
   }
 </style>
 </head>
-<body class="is-loading">
+<body class="is-loading" data-no-cta>
 
 <!-- ===== ФОН ===== -->
 <div class="bg" aria-hidden="true">
@@ -182,14 +307,30 @@
 <!-- ===== HERO ===== -->
 <main class="hero">
   <nav class="menu" aria-label="Разделы">
-    <div class="item reveal" style="--d:.15s">
-      <a class="fx" href="commercial.html"><span class="t">коммерческие проекты</span></a>
+    <div class="group">
+      <div class="head muted reveal" style="--d:.1s">проекты:</div>
+      <div class="sub">
+        <div class="item reveal" style="--d:.18s">
+          <span class="dash" aria-hidden="true">—</span><a class="fx" href="commercial.html"><span class="t">коммерческие</span></a>
+        </div>
+        <div class="item reveal" style="--d:.26s">
+          <span class="dash" aria-hidden="true">—</span><a class="fx" href="collection.html"><span class="t">личные</span></a>
+        </div>
+      </div>
     </div>
-    <div class="item reveal" style="--d:.25s">
-      <a class="fx" href="collection.html"><span class="t">коллекция</span></a>
-    </div>
-    <div class="item reveal" style="--d:.35s">
-      <a class="fx" href="about.html"><span class="t">обо мне</span></a>
+
+    <div class="group contact" id="contact">
+      <div class="head big reveal" style="--d:.34s">
+        <button class="fx" type="button" aria-expanded="false" aria-controls="contact-drop"><span class="t">связь</span></button>
+      </div>
+      <!-- выпадает под «связью»; ссылки берутся из contacts.js -->
+      <div class="drop" id="contact-drop">
+        <div class="contacts">
+          <a class="fx" data-contact="tg" target="_blank" rel="noopener"><span class="t">tg</span></a>
+          <a class="fx" data-contact="wa" target="_blank" rel="noopener"><span class="t">whatsapp</span></a>
+          <a class="fx" data-contact="mail"><span class="t">почта</span></a>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -201,13 +342,81 @@
       <span class="label">artstation</span>
       <a class="nick" href="https://www.artstation.com/van_blend" target="_blank" rel="noopener" aria-label="van_blend на ArtStation"><span style="--i:0">v</span><span style="--i:1">a</span><span style="--i:2">n</span><span style="--i:3">_</span><span style="--i:4">b</span><span style="--i:5">l</span><span style="--i:6">e</span><span style="--i:7">n</span><span style="--i:8">d</span></a>
     </div>
+    <!-- обо мне — без отдельной страницы: по клику выезжает вниз. Текст — в ABOUT ниже -->
+    <div class="about" id="about">
+      <button class="about-btn" type="button" aria-expanded="false" aria-controls="about-drop">обо мне<i class="chev" aria-hidden="true"></i></button>
+      <div class="about-drop" id="about-drop">
+        <div class="about-in"><div class="about-card">
+          <ul class="soft" id="soft" aria-label="Софт"></ul>
+          <p class="role" id="role"></p>
+          <p class="bio" id="bio"></p>
+        </div></div>
+      </div>
+    </div>
   </aside>
 </main>
 
 <script>
+/* =====================================================================
+   ОБО МНЕ — заполни своими данными
+   role — одна строка
+   bio  — 2–3 коротких предложения (пусто = заглушка)
+   soft — иконки софта сверху (name — подсказка при наведении, icon — PNG в img/soft/)
+   ===================================================================== */
+const ABOUT = {
+  role: '3D-конструктор макетов',
+  bio: 'Готовлю к печати сложные макеты для застройщиков и выставок — с тысячами деталей. Продумываю, как модель делится на части и собирается, чтобы всё сошлось с первого раза. На выходе — файлы, готовые к печати.',
+  soft: [
+    { name: 'blender',           icon: 'img/soft/blender.png' },
+    { name: 'plasticity',        icon: 'img/soft/plasticity.png' },
+    { name: 'zbrush',            icon: 'img/soft/zbrush.png' },
+    { name: 'компас-3d',         icon: 'img/soft/kompas.png' },
+    { name: 'substance painter', icon: 'img/soft/substance-painter.png' },
+    { name: 'marmoset toolbag',  icon: 'img/soft/marmoset.png' },
+    { name: 'rizom uv',          icon: 'img/soft/rizomuv.png' },
+    { name: 'photoshop',         icon: 'img/soft/photoshop.png' },
+  ],
+};
+(() => {
+  const $ = id => document.getElementById(id);
+  $('role').textContent = ABOUT.role;
+  $('bio').textContent = ABOUT.bio || 'Пара строк о себе: чем занимаешься, в каком стиле работаешь и с какими задачами к тебе приходят.';
+  $('bio').classList.toggle('is-ph', !ABOUT.bio);
+  $('soft').innerHTML = ABOUT.soft.map(s => `<li title="${s.name}"><img src="${s.icon}" alt="${s.name}"></li>`).join('');
+  $('soft').hidden = !ABOUT.soft.length;
+})();
+
+/* ===== «связь» и «обо мне»: клик / касание открывает и закрывает,
+         клик мимо или Esc — закрывает; открыт только один ===== */
+(() => {
+  const boxes = ['contact', 'about'].map(id => document.getElementById(id));
+  const side = document.querySelector('.side');
+  const about = document.getElementById('about');
+  const desk = matchMedia('(min-width: 761px)');
+  // компьютер: правая колонка поднимается на половину высоты выехавшего текста
+  const lift = () => {
+    const h = desk.matches && about.classList.contains('open') ? about.querySelector('.about-drop').offsetHeight / 2 : 0;
+    side.style.setProperty('--lift', `${Math.round(h)}px`);
+  };
+  addEventListener('resize', lift);
+  const setOpen = (box, v) => {
+    box.classList.toggle('open', v);
+    box.querySelector('button').setAttribute('aria-expanded', v);
+    if (box === about) lift();
+  };
+  boxes.forEach(box => box.querySelector('button').addEventListener('click', e => {
+    e.stopPropagation();
+    const v = !box.classList.contains('open');
+    boxes.forEach(b => setOpen(b, b === box && v));
+  }));
+  // касание мимо — pointerdown, а не click: iOS Safari не шлёт click по «пустым» местам страницы
+  document.addEventListener('pointerdown', e => boxes.forEach(b => { if (!b.contains(e.target)) setOpen(b, false); }));
+  addEventListener('keydown', e => { if (e.key === 'Escape') boxes.forEach(b => setOpen(b, false)); });
+})();
+
 /* ===== стрелки ↑ ↓ переключают пункты меню, Enter — открыть ===== */
 (() => {
-  const list = () => [...document.querySelectorAll('.menu > .item > .fx')];
+  const list = () => [...document.querySelectorAll('.menu a.fx')];
 
   addEventListener('keydown', e => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -339,6 +548,6 @@
   }
 })();
 </script>
-<script src="contacts.js"></script>
+<script src="contacts.js?v=202610122055"></script>
 </body>
 </html>

@@ -1,19 +1,24 @@
 /* =====================================================================
    КОНТАКТЫ — одно место для ссылок на всём сайте.
-   Кнопки «tg», «wa» и «почта» в правом верхнем углу каждой страницы.
-   На телефоне на страницах с верхним меню вместо них компактная «связь»:
-   слово с иконкой, по нажатию слева выезжают иконки почты, Telegram и WhatsApp.
-   Те же ссылки берёт страница about.html.
+   Ссылки подставляются во все <a data-contact="…"> (главная, верхнее меню из nav.js).
+   На страницах без меню — кнопки «tg», «wa» и «почта» в правом верхнем углу.
    Подключение: <script src="contacts.js"></script> в конце <body>.
+   На главной (<body data-no-cta>) угловых кнопок нет — там связь в самом меню.
    ===================================================================== */
 const CONTACTS = {
-  tg:   'https://t.me/USERNAME',        // ← замени на свой
+  tg:   'https://t.me/vnnski',
   wa:   'https://wa.me/79990000000',    // ← замени на свой номер (только цифры, с кодом страны)
-  mail: 'mailto:you@example.com',       // ← замени на свой
+  mail: 'mailto:understanding019@gmail.com',
   artstation: 'https://www.artstation.com/van_blend',
 };
 
 (() => {
+  // ссылки на страницах берутся отсюда: <a data-contact="tg|wa|mail|artstation">
+  document.querySelectorAll('[data-contact]').forEach(a => { a.href = CONTACTS[a.dataset.contact] || '#'; });
+  // <body data-no-cta> — без угловых кнопок (на главной связь прямо в меню);
+  // на страницах с верхним меню (nav.js) «связь» тоже уже в меню
+  if (document.body.hasAttribute('data-no-cta') || document.querySelector('.vb-nav')) return;
+
   const css = `
   .vb-cta {
     position: fixed; z-index: 60;

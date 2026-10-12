@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Коммерческие проекты — van_blend</title>
-<script src="transition.js"></script>
+<script src="transition.js?v=202610122055"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0d0d10;
@@ -108,6 +108,64 @@
   }
   .card.active { cursor: pointer; box-shadow: 0 0 0 1px rgba(255,255,255,.6), 0 20px 60px rgba(0,0,0,.5); }
 
+  /* подсказка «открыть» прямо на активной карточке — чтобы было видно, что по ней можно кликнуть */
+  .card .open-tag {
+    position: absolute; right: 12px; bottom: 12px; z-index: 2;
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px 7px 10px;
+    background: rgba(13, 13, 16, .72); border: 1px solid rgba(255, 255, 255, .28); border-radius: 2px;
+    font-size: 11px; font-weight: 400; letter-spacing: .28em; text-transform: uppercase; color: #fff;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .3s ease, transform .35s cubic-bezier(.2, .8, .2, 1), border-color .3s ease, background-color .3s ease;
+    pointer-events: none;
+  }
+  .card .open-tag svg { width: 16px; height: 16px; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
+  .card .open-tag svg.doc { width: 36px; height: 36px; }
+  .card.active .open-tag { opacity: 1; transform: none; transition-delay: .15s; }
+  @media (hover: hover) {
+    .card.active:hover .open-tag { border-color: var(--accent); background: rgba(157, 92, 255, .28); transition-delay: 0s; }
+    .card.active:hover .open-tag svg:not(.doc) { transform: translateX(3px); }
+  }
+
+  /* клиент — в левом верхнем углу активной карточки: логотип белым монохромом
+     (или название, пока логотипа нет) на мягком затемнении угла */
+  .card .client {
+    position: absolute; left: 14px; top: 12px; z-index: 2;
+    font-size: 10px; font-weight: 400; letter-spacing: .3em; text-transform: uppercase;
+    color: rgba(255, 255, 255, .85);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, .6);
+    opacity: 0; transform: translateY(-4px);
+    transition: opacity .3s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+    pointer-events: none;
+  }
+  .card .client .k { display: block; margin-bottom: 3px; font-size: 9px; letter-spacing: .3em; color: rgba(255, 255, 255, .6); }
+  /* заказчик — салатовым: дополнительный к фиолетовому акценту сайта */
+  .card .client b { display: block; font-size: 14px; font-weight: 500; letter-spacing: .16em; color: #b4e86a; }
+  .card .client img { display: block; max-height: 26px; max-width: 130px; filter: brightness(0) invert(1); opacity: .9; }
+  .card .shade {                       /* затемнение угла под клиентом */
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(120% 90% at 0 0, rgba(0, 0, 0, .55), transparent 45%);
+    opacity: 0; transition: opacity .3s ease;
+  }
+  .card.active .client { opacity: 1; transform: none; transition-delay: .15s; }
+  .card.active .shade { opacity: 1; }
+
+  /* кнопка «смотреть проект» */
+  .acts { display: flex; flex-direction: column; align-items: center; gap: clamp(20px, 3.5vh, 32px); }
+  .more {
+    display: inline-flex; align-items: center; gap: 12px;
+    height: 44px; padding: 0 18px 0 22px;
+    border: 1px solid rgba(157, 92, 255, .7); border-radius: 2px;
+    font-size: 13px; font-weight: 400; letter-spacing: .24em; text-transform: uppercase;
+    transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .more svg { width: 16px; height: 16px; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
+  @media (hover: hover) {
+    .more:hover, .more:focus-visible { outline: none; border-color: var(--accent); background: rgba(157, 92, 255, .18); box-shadow: 0 0 18px rgba(157, 92, 255, .35); }
+    .more:hover svg, .more:focus-visible svg { transform: translateX(4px); }
+  }
+  .more:active { background: rgba(157, 92, 255, .25); }
+
   /* ===================== ИНФО О ПРОЕКТЕ ===================== */
   .info {
     position: relative;
@@ -128,19 +186,11 @@
   .title {
     font-size: clamp(26px, 3.4vw, 48px);
     font-weight: 200; line-height: 1.2;
+    color: var(--accent);                /* название проекта — фирменным фиолетовым */
     letter-spacing: .12em; text-transform: uppercase;
     max-width: 14ch;
     margin: 0 auto;
   }
-  .logo {
-    min-width: 120px; height: 56px;
-    display: inline-grid; place-items: center;
-    padding: 0 20px;
-    border: 1px solid rgba(255,255,255,.6);
-    font-size: 15px; letter-spacing: .2em; text-transform: uppercase;
-  }
-  .logo.has-img { border: 0; padding: 0; }
-  .logo img { max-height: 56px; max-width: 200px; display: block; }
 
   /* смена проекта: старое уезжает вверх, новое приходит снизу */
   .swap { transition: opacity .35s ease, transform .35s ease, filter .35s ease; }
@@ -163,7 +213,7 @@
   /* стрелки на соседних карточках — только на телефоне */
   .car-arrow {
     position: fixed; z-index: 20; translate: -50% -50%;
-    width: 64px; height: 64px;
+    width: 72px; height: 36px;
     display: none; place-items: center;
     color: rgba(255, 255, 255, .7);
     filter: drop-shadow(0 1px 6px rgba(0, 0, 0, .55));
@@ -174,8 +224,18 @@
   /* ===================== ТЕЛЕФОН ===================== */
   @media (max-width: 760px) {
     .car-arrow { display: grid; }
-    .page { grid-template-columns: 1fr; grid-template-rows: 58% 42%; padding-top: 134px; }
-    .info { justify-content: flex-start; padding-top: 12px; gap: 28px; }
+    /* лента забирает всё место, блок с названием — сколько ему нужно */
+    .page { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; padding-top: 134px; padding-bottom: 18px; }
+    .info { justify-content: flex-start; padding-top: 16px; gap: 16px; }
+    .title { font-size: 24px; }
+    .more { height: 44px; padding: 0 14px 0 18px; gap: 10px; font-size: 12px; letter-spacing: .18em; }
+    .card .client { left: 10px; top: 9px; font-size: 9px; letter-spacing: .22em; }
+    .card .client img { max-height: 18px; max-width: 90px; }
+    .card .client .k { font-size: 8px; margin-bottom: 2px; }
+    .card .client b { font-size: 11px; letter-spacing: .12em; }
+    .card .open-tag { right: 8px; bottom: 8px; padding: 6px 8px 6px 10px; gap: 6px; font-size: 10px; letter-spacing: .2em; }
+    .card .open-tag svg { width: 12px; height: 12px; }
+    .card .open-tag svg.doc { width: 28px; height: 28px; }
     .info::before { left: 10%; right: 10%; top: 0; bottom: auto; border-left: 0; border-top: 1px dashed rgba(255,255,255,.18); }
     .hint { display: none; }
   }
@@ -202,22 +262,20 @@
     <div class="swap" id="titleBox">
       <h1 class="title" id="title"></h1>
     </div>
-    <div class="swap" id="clientBox">
-      <div class="logo" id="logo"></div>
+    <div class="acts">
+      <a class="more" id="more" href="project.html?p=0"><span>смотреть проект</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
     </div>
   </section>
 </main>
 
-<div class="hint" aria-hidden="true">↑ ↓ листать</div>
+<div class="hint" aria-hidden="true">↑ ↓ листать · enter — открыть</div>
 
-<script src="projects.js"></script>
+<script src="projects.js?v=202610122055"></script>
 <script>
 (() => {
   const root = document.getElementById('carousel');
   const titleEl = document.getElementById('title');
-  const logoEl = document.getElementById('logo');
   const titleBox = document.getElementById('titleBox');
-  const clientBox = document.getElementById('clientBox');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // заглушки-обложки: разные оттенки серого, пока нет картинок
@@ -235,6 +293,16 @@
       el.innerHTML = `<div class="inner"><div class="ph">обложка ${i + 1}</div></div>`;
     }
     el._inner = el.firstElementChild;
+    // клиент в углу карточки: логотип, если есть, иначе название
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    // у заполненного проекта (есть описание): «заказчик:» мелко + название крупнее и жирнее
+    const who = p.about ? `<span class="k">заказчик:</span><b>${esc(p.client || '')}</b>` : esc(p.client || '');
+    el.insertAdjacentHTML('beforeend', `<span class="shade" aria-hidden="true"></span><span class="client">${
+      p.logo ? `<img src="${esc(p.logo)}" alt="${esc(p.client || '')}">` : who}</span>`);
+    // значок «подробнее»: документ с лупой + стрелка
+    el.insertAdjacentHTML('beforeend', `<span class="open-tag" aria-hidden="true"><svg class="doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.5 21H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3h8L19 7.5V11"/><path d="M14.5 3v4.5H19"/>
+        <path d="M8 8.5h4M8 11.5h6M8 14.5h3"/><circle cx="16.3" cy="16.3" r="3.3"/><path d="m18.7 18.7 2.5 2.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>`);
     el.addEventListener('click', () => {
       if (dragMoved) return;
       if (i === mod(current, N)) openProject(i);   // активная карточка → страница проекта
@@ -249,7 +317,9 @@
   function measure() {
     const r = root.getBoundingClientRect();
     W = Math.min(r.width * (r.width < 700 ? 0.92 : 0.86), 680);   // ширина центральной карточки
-    H = Math.min(W * 0.5625, r.height * 0.46);   // высота (16:9), но не выше половины экрана
+    // высота (16:9): на компьютере не выше половины ленты; на телефоне лента короткая —
+    // карточка такая, чтобы она и обе соседние целиком помещались по высоте
+    H = Math.min(W * 0.5625, r.height * (r.width < 700 ? 0.38 : 0.46));
     W = Math.min(W, H / 0.5625);
     GAP = Math.max(14, H * 0.18);
     // размер всех карточек постоянный — в render() они только масштабируются
@@ -322,32 +392,27 @@
   let infoTimer;
   function setInfo(i, animate = true) {
     const p = PROJECTS[i];
-    const apply = () => {
-      titleEl.textContent = p.title;
-      if (p.logo) {
-        logoEl.className = 'logo has-img';
-        logoEl.innerHTML = `<img src="${p.logo}" alt="${p.client}">`;
-      } else {
-        logoEl.className = 'logo';
-        logoEl.textContent = p.client || 'logo';
-      }
-    };
+    const apply = () => { titleEl.textContent = p.title; };   // клиент — в углу самой карточки
     clearTimeout(infoTimer);
     if (!animate || reduceMotion) { apply(); return; }
-    [titleBox, clientBox].forEach(b => b.classList.add('out'));
+    titleBox.classList.add('out');
     infoTimer = setTimeout(() => {
       apply();
-      [titleBox, clientBox].forEach(b => { b.classList.remove('out'); b.classList.add('in'); });
-      requestAnimationFrame(() => requestAnimationFrame(() =>
-        [titleBox, clientBox].forEach(b => b.classList.remove('in'))
-      ));
+      titleBox.classList.remove('out'); titleBox.classList.add('in');
+      requestAnimationFrame(() => requestAnimationFrame(() => titleBox.classList.remove('in')));
     }, 220);
   }
+
+  // кнопка «смотреть проект» — всегда на активный проект
+  const more = document.getElementById('more');
+  more.addEventListener('click', e => { e.preventDefault(); openProject(mod(current, N)); });
+  const setMore = i => { more.href = `project.html?p=${i}`; };
 
   function go(i) {
     if (i === current) return;
     current = i;
     setInfo(mod(i, N));
+    setMore(mod(i, N));
     kick();
   }
   // перейти к проекту с номером k кратчайшим путём по кругу
@@ -373,7 +438,7 @@
   addEventListener('keydown', e => {
     if (['ArrowDown', 'ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); go(current + 1); }
     if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key))      { e.preventDefault(); go(current - 1); }
-    if (e.key === 'Enter') openProject(mod(current, N));
+    if (e.key === 'Enter' && e.target !== more) openProject(mod(current, N));   // по кнопке Enter сработает её клик
     if (e.key === 'Home') goTo(0);
     if (e.key === 'End') goTo(N - 1);
     if (e.key === 'Escape') (window.vbGo || (u => location.href = u))('index.html#menu');
@@ -395,8 +460,8 @@
   addEventListener('pointerup', endDrag);
   addEventListener('pointercancel', () => { dragY = null; });
 
-  // стрелки на соседних карточках (телефон): ▲ — предыдущий проект, ▼ — следующий.
-  // Стоят вне ленты (у неё маска растворения), позиция — по центрам соседних карточек
+  // стрелки у активной карточки (телефон): ▲ — предыдущий проект, ▼ — следующий.
+  // Стоят вне ленты (у неё маска растворения)
   const chev = d => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5"
     stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="${d}"/></svg>`;
   const arrows = [
@@ -410,8 +475,14 @@
     document.body.appendChild(b);
     return b;
   });
+  // координаты по раскладке (offset*), а не по экрану: при переходах страница сдвинута/увеличена,
+  // и экранные координаты уводили стрелки в сторону
+  const layoutRect = el => { let x = 0, y = 0, e = el; while (e) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { cx: x + el.offsetWidth / 2, cy: y + el.offsetHeight / 2 }; };
+  // стрелки вплотную к активной карточке: над её верхним краем и под нижним.
+  // Центр стрелки — в 19px от рамки, а кнопка высотой 36px: область нажатия кончается ровно
+  // у рамки и не перехватывает тап по самой карточке
   function placeArrows() {
-    const r = root.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, d = posAt(1);
+    const { cx, cy } = layoutRect(root), d = H / 2 + 19;
     arrows[0].style.left = arrows[1].style.left = cx + 'px';
     arrows[0].style.top = cy - d + 'px';
     arrows[1].style.top = cy + d + 'px';
@@ -419,18 +490,24 @@
 
   addEventListener('resize', () => { measure(); render(); placeArrows(); });
   // лента меняет размер и после загрузки (меню задаёт отступ сверху) — стрелки переставляем
-  if ('ResizeObserver' in window) new ResizeObserver(placeArrows).observe(root);
+  if ('ResizeObserver' in window) new ResizeObserver(() => { measure(); render(); placeArrows(); }).observe(root);
   root.addEventListener('scroll', () => { root.scrollTop = 0; root.scrollLeft = 0; });   // карусель никогда не прокручивается сама
 
   // ----- старт -----
+  // вернулись с карточки проекта (commercial.html?at=N) — карусель сразу стоит на этом проекте
+  const at = parseInt(new URLSearchParams(location.search).get('at'), 10);
+  if (at >= 0 && at < N) current = shown = at;
   measure();
-  setInfo(0, false);
+  setInfo(mod(current, N), false);
+  setMore(mod(current, N));
   render();
+  placeArrows();                                      // стрелки — после первого расчёта размеров
+  addEventListener('load', placeArrows);              // и ещё раз, когда догрузятся шрифты и меню
   requestAnimationFrame(() => document.body.classList.add('ready'));
   root.focus({ preventScroll: true });
 })();
 </script>
-<script src="nav.js" data-current="commercial"></script>
-<script src="contacts.js"></script>
+<script src="nav.js?v=202610122055" data-current="commercial"></script>
+<script src="contacts.js?v=202610122055"></script>
 </body>
 </html>

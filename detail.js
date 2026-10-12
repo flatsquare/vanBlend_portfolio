@@ -45,11 +45,19 @@
   .sib-btn.next:hover svg, .sib-btn.next:focus-visible svg { transform: translateX(4px); }
   }
   .sib-n { min-width: 64px; text-align: center; font-size: 12px; font-weight: 400; letter-spacing: .3em; }
+  /* с верхним меню (nav.js) справа сверху «связь» — соседи встают сразу под линией меню */
+  body:has(.vb-nav) .sib { top: var(--vb-nav-h, 110px); height: 40px; }
+  /* во весь экран меню и соседи не нужны */
+  body.zoom .vb-nav, body.zoom .sib { opacity: 0; pointer-events: none; }
+  body.zoom main.page { -webkit-mask-image: none; mask-image: none; }
 
   @media (max-width: 760px) {
     .prev-tab { padding: 0 10px 0 12px; gap: 6px; }
     .prev-tab .lbl { font-size: 10px; letter-spacing: .22em; }
     .sib { top: 6px; height: 60px; right: 2px; }
+    body:has(.vb-nav) .sib { top: var(--vb-nav-h, 110px); height: 36px; }
+    /* соседи висят под меню, поэтому при прокрутке подложка меню закрывает и их полосу */
+    body:has(.sib) .vb-nav::before { bottom: calc(-1 * var(--drop) - 46px); }
     .sib-btn { width: 40px; height: 40px; }
     .sib-btn svg { width: 22px; height: 22px; }
     .sib-n { min-width: 52px; font-size: 11px; letter-spacing: .2em; }
