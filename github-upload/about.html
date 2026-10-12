@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Обо мне — van_blend</title>
+<script src="transition.js?v=202610122209"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d10;
+    --fg: #fff;
+    --muted: #a3a3ab;
+    --accent: #9d5cff;
+    --line: rgba(255,255,255,.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  html, body {
+    min-height: 100%;
+    color: var(--fg);
+    font-family: "Jost", "Futura", "Century Gothic", sans-serif;
+    font-weight: 200;
+    -webkit-font-smoothing: antialiased;
+  }
+  a, button {
+    color: inherit; text-decoration: none; font: inherit;
+    letter-spacing: inherit; text-transform: inherit;
+    background: none; border: 0; padding: 0; cursor: pointer;
+  }
+
+  /* ===================== ФОН (как на остальных разделах) ===================== */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
+  .blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+    animation: drift var(--t, 26s) ease-in-out infinite alternate;
+  }
+  .b-1 { width: 55vmax; height: 55vmax; left: -18vmax; bottom: -22vmax; background: #7a7a84; opacity: .32; --t: 28s; }
+  .b-2 { width: 42vmax; height: 42vmax; right: -12vmax; top: -16vmax; background: #9a9aa3; opacity: .28; --t: 24s; animation-delay: -6s; }
+  .b-3 { width: 30vmax; height: 30vmax; left: 38%; top: -14vmax; background: #ffffff; opacity: .12; --t: 32s; animation-delay: -12s; }
+  .b-4 { width: 48vmax; height: 48vmax; right: -16vmax; bottom: -24vmax; background: #6c6c78; opacity: .35; --t: 30s; animation-delay: -3s; }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(6vmax, -4vmax) scale(1.1); }
+    100% { transform: translate(-4vmax, 5vmax) scale(.95); }
+  }
+  .bg::after {
+    content: ""; position: absolute; inset: 0; opacity: .09; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ===================== РАСКЛАДКА ===================== */
+  /*  [портрет] [имя, роль, о себе] ┆ [контакты]
+      [портрет] [иконки софта ───────────────]
+      портрет во всю высоту слева; отступ сверху задаёт nav.js */
+  .page {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; justify-content: center;   /* блок — по центру под меню */
+    padding-left: clamp(16px, 5vw, 96px); padding-right: clamp(16px, 5vw, 96px);
+    padding-bottom: clamp(28px, 6vh, 64px);
+    max-width: 1400px; margin: 0 auto;
+    opacity: 0; transition: opacity .8s ease;
+  }
+  /* сетка блока: высоту задаёт портрет, иконки стоят вровень с его низом */
+  .grid {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, .9fr);
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(24px, 3.5vw, 56px); row-gap: 20px;
+  }
+  body.ready .page { opacity: 1; }
+
+  .portrait {
+    grid-column: 1; grid-row: 1 / 3; align-self: start;
+    width: clamp(160px, 17vw, 260px); aspect-ratio: 3 / 4;
+    border-radius: 2px; overflow: hidden;
+    background: #222;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 24px 60px rgba(0,0,0,.45);
+  }
+  .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .text { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 18px; }
+  .name {
+    font-size: clamp(28px, 3.2vw, 46px); font-weight: 200; line-height: 1.1;
+    letter-spacing: .14em; text-transform: uppercase;
+  }
+  .role { font-size: 13px; font-weight: 400; letter-spacing: .28em; text-transform: uppercase; color: #c4c4cc; }
+  .bio { font-size: 15px; font-weight: 300; line-height: 1.75; letter-spacing: .03em; color: #d4d4da; max-width: 52ch; }
+  .is-ph { color: var(--muted) !important; opacity: .6; }       /* заглушка, пока нет текста */
+  /* софт — ряд цветных иконок под текстом; название — подсказкой при наведении.
+     Иконки лежат в img/soft/ (PNG 128×128), без файла — короткая подпись (Bl, Zb…) */
+  .soft {
+    grid-column: 2 / 4; grid-row: 2; align-self: start;   /* сразу под текстом */
+    width: 65%; margin-top: 18px;
+    display: flex; justify-content: space-between; gap: 8px; list-style: none;   /* иконки равномерно на всю ширину */
+  }
+  .soft li {
+    position: relative;
+    width: 52px; height: 52px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 400;
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .soft img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .soft li::after {                    /* подсказка с названием — над иконкой */
+    content: attr(data-name);
+    position: absolute; left: 50%; bottom: calc(100% + 10px); translate: -50% 4px;
+    padding: 4px 10px; white-space: nowrap;
+    background: rgba(13,13,16,.92); border: 1px solid rgba(255,255,255,.18); border-radius: 2px;
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #fff;
+    opacity: 0; pointer-events: none; transition: opacity .2s ease, translate .2s ease;
+  }
+  @media (hover: hover) {
+  .soft li:hover { transform: translateY(-3px) scale(1.08); }
+  }
+  .soft li:hover::after { opacity: 1; translate: -50% 0; }
+  @media (hover: none) { .soft li::after { display: none; } }   /* на сенсорных экранах наведения нет */
+  /* ----- контакты справа от текста, через пунктир ----- */
+  .right {
+    grid-column: 3; grid-row: 1; align-self: start;
+    position: relative;
+    padding-left: clamp(20px, 3vw, 48px);
+  }
+  .right::before {                     /* пунктир-разделитель, как на других страницах */
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    border-left: 1px dashed var(--line);
+  }
+  .sec {
+    font-size: 14px; font-weight: 400; letter-spacing: .32em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* контакты — крупные строки со стрелкой ↗ */
+  .links { display: flex; flex-direction: column; }
+  .link {
+    position: relative;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    transition: color .3s ease, padding .35s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .link:first-child { border-top: 1px solid rgba(255,255,255,.14); }
+  .link .k { font-size: clamp(17px, 1.5vw, 21px); letter-spacing: .16em; text-transform: uppercase; }
+  .link .v { font-size: 12px; font-weight: 300; letter-spacing: .08em; color: var(--muted); margin-left: auto; }
+  .link .arr { font-size: 15px; color: var(--muted); transition: transform .35s ease, color .3s ease; }
+  @media (hover: hover) {
+  .link:hover, .link:focus-visible { color: var(--accent); padding-left: 10px; outline: none; }
+  }
+  @media (hover: hover) {
+  .link:hover .arr, .link:focus-visible .arr { color: var(--accent); transform: translate(3px, -3px); }
+  }
+
+  /* ===================== ТЕЛЕФОН ===================== */
+  /* узко: портрет | текст, ниже иконки, ещё ниже контакты */
+  @media (max-width: 1000px) {
+    .grid { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr auto; }
+    .portrait { grid-row: 1 / 3; }
+    .soft { grid-column: 2; grid-row: 2; width: 100%; }
+    .right { grid-column: 1 / 3; grid-row: 3; padding-left: 0; padding-top: 28px; margin-top: 8px; }
+    .right::before { left: 10%; right: 10%; bottom: auto; border-left: 0; border-top: 1px dashed var(--line); }
+  }
+  /* телефон: всё в одну колонку */
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; grid-template-rows: none; }
+    .portrait, .text, .soft, .right { grid-column: 1; grid-row: auto; }
+    .soft li { width: 34px; height: 34px; }
+    .soft { order: 1; } .right { order: 2; }              /* иконки сразу под текстом, контакты ниже */
+    .portrait { width: 60%; justify-self: center; }
+    .link .v { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0s !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="blob b-1"></div>
+  <div class="blob b-2"></div>
+  <div class="blob b-3"></div>
+  <div class="blob b-4"></div>
+</div>
+
+<main class="page"><div class="grid">
+  <div class="portrait"><img id="photo" alt="van_blend"></div>
+  <div class="text">
+    <h1 class="name" id="name"></h1>
+    <p class="role" id="role"></p>
+    <p class="bio" id="bio"></p>
+  </div>
+  <section class="right">
+    <h2 class="sec">контакты</h2>
+    <div class="links" id="links"></div>
+  </section>
+  <ul class="soft" id="soft" aria-label="Софт"></ul>
+</div></main>
+
+<script src="nav.js?v=202610122209" data-current="about"></script>
+<script src="contacts.js?v=202610122209"></script>
+<script>
+/* =====================================================================
+   ОБО МНЕ — заполни своими данными
+   bio     — пара абзацев о себе (пусто = заглушка)
+   soft    — программы сверху вниз: name — название (подсказка), short — подпись,
+             пока нет иконки; icon — путь к иконке, например 'img/soft/blender.svg'
+   Контакты берутся из contacts.js
+   ===================================================================== */
+const ABOUT = {
+  name: 'van_blend',
+  role: '3d-художник · визуализация',
+  photo: 'photo.jpg',
+  bio: '',
+  soft: [
+    { name: 'blender',           short: 'Bl', icon: 'img/soft/blender.png' },
+    { name: 'plasticity',        short: 'Px', icon: 'img/soft/plasticity.png' },
+    { name: 'zbrush',            short: 'Zb', icon: 'img/soft/zbrush.png' },
+    { name: 'компас-3d',         short: 'К3', icon: 'img/soft/kompas.png' },
+    { name: 'substance painter', short: 'Pt', icon: 'img/soft/substance-painter.png' },
+    { name: 'marmoset toolbag',  short: 'Mt', icon: 'img/soft/marmoset.png' },
+    { name: 'rizom uv',          short: 'Rz', icon: 'img/soft/rizomuv.png' },
+    { name: 'photoshop',         short: 'Ps', icon: 'img/soft/photoshop.png' },
+  ],
+};
+
+(() => {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const $ = id => document.getElementById(id);
+
+  $('name').textContent = ABOUT.name;
+  $('role').textContent = ABOUT.role;
+  $('photo').src = ABOUT.photo;
+
+  const bio = $('bio');
+  bio.textContent = ABOUT.bio || 'Пара абзацев о себе: чем занимаешься, в каком стиле работаешь, с какими задачами к тебе приходят и чем ты полезен клиенту.';
+  bio.classList.toggle('is-ph', !ABOUT.bio);
+
+  $('soft').innerHTML = ABOUT.soft.map(s => `<li data-name="${esc(s.name)}" aria-label="${esc(s.name)}">${
+    s.icon ? `<img src="${esc(s.icon)}" alt="">` : esc(s.short)
+  }</li>`).join('');
+
+  // контакты: подпись — сам адрес без «https://», «mailto:»
+  const pretty = u => u.replace(/^mailto:/, '').replace(/^https?:\/\/(www\.)?/, '');
+  const LINKS = [
+    { k: 'telegram', href: CONTACTS.tg },
+    { k: 'whatsapp', href: CONTACTS.wa },
+    { k: 'почта',    href: CONTACTS.mail },
+  ];
+  $('links').innerHTML = LINKS.map(l => {
+    const ext = /^https?:/.test(l.href) ? ' target="_blank" rel="noopener"' : '';
+    return `<a class="link" href="${esc(l.href)}"${ext}><span class="k">${l.k}</span><span class="v">${esc(pretty(l.href))}</span><span class="arr" aria-hidden="true">↗</span></a>`;
+  }).join('');
+
+  requestAnimationFrame(() => document.body.classList.add('ready'));
+})();
+</script>
+</body>
+</html>
