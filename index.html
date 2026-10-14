@@ -15,7 +15,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>van_blend — портфолио</title>
-<script src="transition.js?v=202610122055"></script>
+<script src="transition.js?v=202610141228"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;500&display=swap" rel="stylesheet">
@@ -259,7 +259,9 @@
     display: flex; flex-direction: column; align-items: center; gap: 12px;
     text-align: center;
   }
-  .role { font-size: 11px; font-weight: 300; letter-spacing: .22em; text-transform: uppercase; color: #c4c4cc; white-space: nowrap; }
+  /* роль в две строки: крупнее — кто я, мельче и серым — специализация */
+  .role { font-size: 13px; font-weight: 500; letter-spacing: .26em; text-transform: uppercase; color: #e6e6ea; white-space: nowrap; }
+  .role-sub { margin-top: -6px; font-size: 11px; font-weight: 300; letter-spacing: .14em; color: var(--muted); white-space: nowrap; }
   .bio { font-size: 13px; font-weight: 300; line-height: 1.7; letter-spacing: .03em; color: var(--muted); }
   .bio.is-ph { opacity: .6; }       /* заглушка, пока нет текста */
   /* иконки софта — ряд над ролью; название — подсказкой при наведении */
@@ -349,6 +351,7 @@
         <div class="about-in"><div class="about-card">
           <ul class="soft" id="soft" aria-label="Софт"></ul>
           <p class="role" id="role"></p>
+          <p class="role-sub" id="roleSub"></p>
           <p class="bio" id="bio"></p>
         </div></div>
       </div>
@@ -359,19 +362,20 @@
 <script>
 /* =====================================================================
    ОБО МНЕ — заполни своими данными
-   role — одна строка
-   bio  — 2–3 коротких предложения (пусто = заглушка)
+   role    — кто я (крупная строка), roleSub — специализация (мелкая строка под ней)
+   bio     — 2–3 коротких предложения (пусто = заглушка)
    soft — иконки софта сверху (name — подсказка при наведении, icon — PNG в img/soft/)
    ===================================================================== */
 const ABOUT = {
-  role: '3D-конструктор макетов',
-  bio: 'Готовлю к печати сложные макеты для застройщиков и выставок — с тысячами деталей. Продумываю, как модель делится на части и собирается, чтобы всё сошлось с первого раза. На выходе — файлы, готовые к печати.',
+  role: '3D-моделлер',
+  roleSub: 'конструктор макетов под печать',
+  bio: 'Конструирую сложные макеты под 3D-печать — от исторической техники до научных моделей и жилых кварталов. Продумываю, как модель делится на десятки деталей и собирается, чтобы всё сошлось с первого раза. На выходе — файлы, готовые к печати. Также работаю с hard surface, скульптингом персонажей и ювелирными моделями.',
   soft: [
     { name: 'blender',           icon: 'img/soft/blender.png' },
     { name: 'plasticity',        icon: 'img/soft/plasticity.png' },
     { name: 'zbrush',            icon: 'img/soft/zbrush.png' },
     { name: 'компас-3d',         icon: 'img/soft/kompas.png' },
-    { name: 'substance painter', icon: 'img/soft/substance-painter.png' },
+    { name: 'substance painter', icon: 'img/soft/substance-painter.svg' },
     { name: 'marmoset toolbag',  icon: 'img/soft/marmoset.png' },
     { name: 'rizom uv',          icon: 'img/soft/rizomuv.png' },
     { name: 'photoshop',         icon: 'img/soft/photoshop.png' },
@@ -380,6 +384,8 @@ const ABOUT = {
 (() => {
   const $ = id => document.getElementById(id);
   $('role').textContent = ABOUT.role;
+  $('roleSub').textContent = ABOUT.roleSub || '';
+  $('roleSub').hidden = !ABOUT.roleSub;
   $('bio').textContent = ABOUT.bio || 'Пара строк о себе: чем занимаешься, в каком стиле работаешь и с какими задачами к тебе приходят.';
   $('bio').classList.toggle('is-ph', !ABOUT.bio);
   $('soft').innerHTML = ABOUT.soft.map(s => `<li title="${s.name}"><img src="${s.icon}" alt="${s.name}"></li>`).join('');
@@ -548,6 +554,6 @@ const ABOUT = {
   }
 })();
 </script>
-<script src="contacts.js?v=202610122055"></script>
+<script src="contacts.js?v=202610141228"></script>
 </body>
 </html>

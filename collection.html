@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Личные проекты — van_blend</title>
-<script src="transition.js?v=202610122055"></script>
+<script src="transition.js?v=202610141228"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
@@ -156,12 +156,11 @@
 </main>
 
 <div class="counter" id="counter"></div>
-<div class="hint" aria-hidden="true">← → листать · клик — во весь экран</div>
 
 <!-- картинка во весь экран; закрывается кликом или Esc -->
 <div class="full" id="full" role="dialog" aria-modal="true" aria-label="Работа во весь экран"><img alt=""></div>
 
-<script src="works.js?v=202610122055"></script>
+<script src="works.js?v=202610141228"></script>
 <script>
 (() => {
   const strip = document.getElementById('strip');
@@ -335,12 +334,20 @@
   /* ---------- во весь экран (отдельной страницы у работы нет — по одной картинке) ---------- */
   const full = document.getElementById('full'), fullImg = full.querySelector('img');
   const isOpen = () => full.classList.contains('open');
+  // открытие добавляет шаг в историю браузера: системное «назад» (жест на iPhone, кнопка на Android)
+  // закрывает картинку, а не уводит со страницы
   function openFull(i) {
     if (!WORKS[i].src) return;
     fullImg.src = WORKS[i].src;
+    if (!isOpen()) history.pushState({ vbFull: 1 }, '');
     full.classList.add('open');
   }
-  const closeFull = () => full.classList.remove('open');
+  const closeFull = () => {
+    if (!isOpen()) return;
+    if (history.state && history.state.vbFull) history.back();   // уберёт шаг из истории, закроет popstate
+    else full.classList.remove('open');
+  };
+  addEventListener('popstate', () => full.classList.remove('open'));
   full.addEventListener('click', closeFull);
 
   addEventListener('keydown', e => {
@@ -375,7 +382,7 @@
   strip.focus({ preventScroll: true });
 })();
 </script>
-<script src="nav.js?v=202610122055" data-current="collection"></script>
-<script src="contacts.js?v=202610122055"></script>
+<script src="nav.js?v=202610141228" data-current="collection"></script>
+<script src="contacts.js?v=202610141228"></script>
 </body>
 </html>

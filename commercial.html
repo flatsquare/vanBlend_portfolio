@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Коммерческие проекты — van_blend</title>
-<script src="transition.js?v=202610122055"></script>
+<script src="transition.js?v=202610141228"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
@@ -154,13 +154,12 @@
   .acts { display: flex; flex-direction: column; align-items: center; gap: clamp(20px, 3.5vh, 32px); }
   .more {
     display: inline-flex; align-items: center; gap: 12px;
-    height: 44px; padding: 0 18px 0 22px;
+    height: clamp(44px, 2.6vw, 60px); padding: 0 clamp(18px, 1.1vw, 26px) 0 clamp(22px, 1.35vw, 32px);
     border: 1px solid rgba(157, 92, 255, .7); border-radius: 2px;
-    font-size: 13px; font-weight: 400; letter-spacing: .24em; text-transform: uppercase;
+    font-size: clamp(13px, .75vw, 17px); font-weight: 400; letter-spacing: .24em; text-transform: uppercase;
     transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease;
   }
-  .more svg { width: 16px; height: 16px; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
-  @media (hover: hover) {
+  .more svg { width: 1.25em; height: 1.25em; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }  @media (hover: hover) {
     .more:hover, .more:focus-visible { outline: none; border-color: var(--accent); background: rgba(157, 92, 255, .18); box-shadow: 0 0 18px rgba(157, 92, 255, .35); }
     .more:hover svg, .more:focus-visible svg { transform: translateX(4px); }
   }
@@ -184,7 +183,7 @@
     color: var(--muted); opacity: .7;
   }
   .title {
-    font-size: clamp(26px, 3.4vw, 48px);
+    font-size: clamp(26px, 3.4vw, 72px);       /* на больших мониторах крупнее */
     font-weight: 200; line-height: 1.2;
     color: var(--accent);                /* название проекта — фирменным фиолетовым */
     letter-spacing: .12em; text-transform: uppercase;
@@ -227,8 +226,7 @@
     /* лента забирает всё место, блок с названием — сколько ему нужно */
     .page { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; padding-top: 134px; padding-bottom: 18px; }
     .info { justify-content: flex-start; padding-top: 16px; gap: 16px; }
-    .title { font-size: 24px; }
-    .more { height: 44px; padding: 0 14px 0 18px; gap: 10px; font-size: 12px; letter-spacing: .18em; }
+    .title { font-size: 24px; }    .more { height: 44px; padding: 0 14px 0 18px; gap: 10px; font-size: 12px; letter-spacing: .18em; }
     .card .client { left: 10px; top: 9px; font-size: 9px; letter-spacing: .22em; }
     .card .client img { max-height: 18px; max-width: 90px; }
     .card .client .k { font-size: 8px; margin-bottom: 2px; }
@@ -270,7 +268,7 @@
 
 <div class="hint" aria-hidden="true">↑ ↓ листать · enter — открыть</div>
 
-<script src="projects.js?v=202610122055"></script>
+<script src="projects.js?v=202610141228"></script>
 <script>
 (() => {
   const root = document.getElementById('carousel');
@@ -316,7 +314,8 @@
   let W, H, GAP;
   function measure() {
     const r = root.getBoundingClientRect();
-    W = Math.min(r.width * (r.width < 700 ? 0.92 : 0.86), 680);   // ширина центральной карточки
+    // ширина центральной карточки; потолок растёт на больших мониторах (≈42% ширины окна, не меньше 680)
+    W = Math.min(r.width * (r.width < 700 ? 0.92 : 0.86), Math.max(680, innerWidth * 0.42));
     // высота (16:9): на компьютере не выше половины ленты; на телефоне лента короткая —
     // карточка такая, чтобы она и обе соседние целиком помещались по высоте
     H = Math.min(W * 0.5625, r.height * (r.width < 700 ? 0.38 : 0.46));
@@ -392,7 +391,7 @@
   let infoTimer;
   function setInfo(i, animate = true) {
     const p = PROJECTS[i];
-    const apply = () => { titleEl.textContent = p.title; };   // клиент — в углу самой карточки
+    const apply = () => { titleEl.textContent = p.title; };   // клиент — в углу карточки, описание — на странице проекта
     clearTimeout(infoTimer);
     if (!animate || reduceMotion) { apply(); return; }
     titleBox.classList.add('out');
@@ -507,7 +506,7 @@
   root.focus({ preventScroll: true });
 })();
 </script>
-<script src="nav.js?v=202610122055" data-current="commercial"></script>
-<script src="contacts.js?v=202610122055"></script>
+<script src="nav.js?v=202610141228" data-current="commercial"></script>
+<script src="contacts.js?v=202610141228"></script>
 </body>
 </html>

@@ -15,6 +15,76 @@ const CONTACTS = {
 (() => {
   // ссылки на страницах берутся отсюда: <a data-contact="tg|wa|mail|artstation">
   document.querySelectorAll('[data-contact]').forEach(a => { a.href = CONTACTS[a.dataset.contact] || '#'; });
+
+  /* «почта»: на компьютере клик копирует адрес и показывает «почта скопирована»
+     (почтовой программы у многих нет — mailto ничего не открывает);
+     на телефоне — обычный mailto, открывается приложение почты */
+  const desktop = matchMedia('(hover: hover) and (pointer: fine)');
+  const address = CONTACTS.mail.replace(/^mailto:/, '');
+  /* плашка с адресом: не исчезает, пока на ней мышь; сама уходит через 10 с;
+     адрес выделяется целиком одним кликом — можно скопировать вручную; × и клик мимо закрывают */
+  let toast, toastTimer;
+  const hideToast = () => { if (toast) toast.classList.remove('on'); clearTimeout(toastTimer); };
+  const armTimer = () => { clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 10000); };
+  function showToast(text) {
+    if (!toast) {
+      const st = document.createElement('style');
+      st.textContent = `
+      .vb-toast {
+        position: fixed; left: 50%; bottom: clamp(20px, 5vh, 44px); z-index: 200;
+        translate: -50% 12px; opacity: 0; pointer-events: none;
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 10px 10px 18px; border-radius: 2px;
+        background: rgba(11, 11, 14, .96); border: 1px solid rgba(157, 92, 255, .6);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+        font-family: "Jost", "Futura", "Century Gothic", sans-serif; font-weight: 400;
+        font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: #fff;
+        transition: opacity .25s ease, translate .3s cubic-bezier(.2, .8, .2, 1);
+      }
+      .vb-toast.on { opacity: 1; translate: -50% 0; pointer-events: auto; }
+      .vb-toast b {
+        font-weight: 400; color: #b4e86a; letter-spacing: .06em; text-transform: none;
+        user-select: all; -webkit-user-select: all; cursor: text;      /* один клик — выделен весь адрес */
+        padding: 2px 4px; border-radius: 2px;
+      }
+      .vb-toast b::selection { background: rgba(157, 92, 255, .45); color: #fff; }
+      .vb-toast button {
+        width: 26px; height: 26px; display: grid; place-items: center; flex: none;
+        background: none; border: 0; cursor: pointer; color: #a3a3ab; font: inherit; font-size: 16px; letter-spacing: 0;
+        transition: color .2s ease;
+      }
+      .vb-toast button:hover { color: #9d5cff; }`;
+      document.head.appendChild(st);
+      toast = document.createElement('div');
+      toast.className = 'vb-toast'; toast.setAttribute('role', 'status');
+      toast.addEventListener('mouseenter', () => clearTimeout(toastTimer));   // пока мышь на плашке — не исчезает
+      toast.addEventListener('mouseleave', armTimer);
+      toast.addEventListener('click', e => { if (e.target.closest('button')) hideToast(); });
+      document.addEventListener('pointerdown', e => {                       // клик мимо — закрыть
+        if (toast.classList.contains('on') && !toast.contains(e.target) && !e.target.closest('a[data-contact="mail"], a[href^="mailto:"]')) hideToast();
+      });
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = `<span>${text}</span><button type="button" aria-label="Закрыть">×</button>`;
+    toast.classList.add('on');
+    armTimer();
+  }
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (e) {                                   // запасной способ, если clipboard API недоступен
+      const t = document.createElement('textarea');
+      t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t);
+      t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+      t.remove(); return ok;
+    }
+  }
+  document.addEventListener('click', async e => {
+    const a = e.target.closest('a[data-contact="mail"], a[href^="mailto:"]');
+    if (!a || !desktop.matches) return;          // телефон — пусть открывается почтовое приложение
+    e.preventDefault();
+    const ok = await copy(address);
+    showToast(`${ok ? 'почта скопирована' : 'почта'} <b>${address}</b>`);
+  });
   // <body data-no-cta> — без угловых кнопок (на главной связь прямо в меню);
   // на страницах с верхним меню (nav.js) «связь» тоже уже в меню
   if (document.body.hasAttribute('data-no-cta') || document.querySelector('.vb-nav')) return;

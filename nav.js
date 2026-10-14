@@ -25,7 +25,7 @@
   const css = `
   .vb-nav {
     --accent: #9d5cff; --muted: #a3a3ab;
-    position: fixed; top: clamp(14px, 2.6vh, 26px); left: 0; right: 0; z-index: 50;
+    position: fixed; top: clamp(14px, 2.6vh, 26px); left: 0; right: 0; z-index: 60;   /* выше соседей «‹ 05 / 09 ›» (50) — список «связи» их перекрывает */
     padding: 0 clamp(8px, 3vw - 12px, 36px);
     display: grid; grid-template-columns: 1fr auto 1fr; align-items: start;
     pointer-events: none;               /* панель во всю ширину, но кликаются только пункты */
